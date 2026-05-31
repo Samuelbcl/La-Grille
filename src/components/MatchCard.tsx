@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
-import { flag, formatKickoff } from "@/lib/utils";
+import { flag, formatKickoff, matchState } from "@/lib/utils";
 import { outcomeOf, stageBareme } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
   const router = useRouter();
   const locked = new Date(m.kickoff) <= new Date();
   const finished = m.status === "finished";
+  const state = matchState(m.kickoff, m.status);
 
   // Prono enregistré (état local → retour instantané après "Valider").
   const [predA, setPredA] = useState<number | null>(m.pred_a ?? null);
@@ -40,6 +41,23 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
   const [b, setB] = useState(predB ?? 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 🎉 Confettis (une seule fois par match) quand TON prono est un score exact.
+  useEffect(() => {
+    if (state !== "finished" || predA == null || predB == null) return;
+    if (!(predA === m.score_a && predB === m.score_b)) return;
+    try {
+      const key = "lagrille:celebrated";
+      const seen: string[] = JSON.parse(localStorage.getItem(key) || "[]");
+      if (seen.includes(m.id)) return;
+      localStorage.setItem(key, JSON.stringify([...seen, m.id]));
+    } catch {}
+    import("canvas-confetti")
+      .then(({ default: confetti }) =>
+        confetti({ particleCount: 110, spread: 75, origin: { y: 0.7 }, colors: ["#0A84FF", "#ffd166", "#ffffff"] })
+      )
+      .catch(() => {});
+  }, [state, predA, predB, m.id, m.score_a, m.score_b]);
 
   function openEdit() {
     setA(predA ?? 0);
@@ -67,6 +85,11 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
     setPredA(a);
     setPredB(b);
     setEditing(false);
+    import("canvas-confetti")
+      .then(({ default: confetti }) =>
+        confetti({ particleCount: 45, spread: 55, scalar: 0.8, origin: { y: 0.8 }, colors: ["#0A84FF", "#ffd166", "#ffffff"] })
+      )
+      .catch(() => {});
     router.refresh(); // met à jour le compteur "à pronostiquer" et le classement
   }
 
@@ -92,7 +115,7 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
           {m.group_label ? `Groupe ${m.group_label} · ` : ""}
           {formatKickoff(m.kickoff)}
         </span>
-        {!locked && !finished && (
+        {state === "upcoming" && (
           <button
             onClick={() => (editing ? setEditing(false) : openEdit())}
             className="shrink-0 font-medium text-accent"
@@ -100,6 +123,12 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
             {editing ? "Annuler" : hasPred ? "Modifier" : "Pronostiquer"}
           </button>
         )}
+        {state === "live" && (
+          <span className="shrink-0 inline-flex items-center gap-1 font-semibold text-[#ff3b30]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#ff3b30] animate-pulse" /> En direct
+          </span>
+        )}
+        {state === "finished" && <span className="shrink-0 font-medium text-muted">Terminé</span>}
       </div>
 
       {editing ? (

@@ -33,3 +33,20 @@ export function dayKey(iso: string): string {
     month: "long",
   });
 }
+
+/** État d'un match : à venir, en cours (coup d'envoi passé, pas de résultat), terminé. */
+export function matchState(kickoff: string, status: string): "upcoming" | "live" | "finished" {
+  if (status === "finished") return "finished";
+  return new Date(kickoff) <= new Date() ? "live" : "upcoming";
+}
+
+/** Vrai si l'ISO tombe aujourd'hui (heure locale). */
+export function isToday(iso: string): boolean {
+  const d = new Date(iso);
+  const n = new Date();
+  return (
+    d.getFullYear() === n.getFullYear() &&
+    d.getMonth() === n.getMonth() &&
+    d.getDate() === n.getDate()
+  );
+}
