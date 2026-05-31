@@ -67,7 +67,7 @@ export default async function HomePage() {
             </h2>
             <div className="space-y-2.5">
               {list.map((m) => (
-                <MatchCard key={m.id} m={m} />
+                <MatchCard key={m.id} m={m} userId={pool.user_id} />
               ))}
             </div>
           </section>
