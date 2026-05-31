@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SEED_MATCHES } from "@/data/matches";
 import { flag, formatKickoff } from "@/lib/utils";
 import { LogOut, Copy, Check, Minus, Plus } from "lucide-react";
@@ -128,7 +129,14 @@ export default function AdminPage() {
     router.push("/login");
   }
 
-  if (loading) return <div className="px-6 pt-24 text-center text-muted">Chargement…</div>;
+  if (loading)
+    return (
+      <div className="px-5 pt-[calc(env(safe-area-inset-top)+18px)] space-y-4">
+        <Skeleton className="h-7 w-32" />
+        <Skeleton className="h-24 rounded-2xl" />
+        <Skeleton className="h-44 rounded-2xl" />
+      </div>
+    );
 
   // --- Aucun pool : créer ou rejoindre ---
   if (!pool) {

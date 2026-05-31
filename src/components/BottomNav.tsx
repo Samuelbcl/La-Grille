@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, ListChecks, Settings2 } from "lucide-react";
+import { Trophy, ListChecks, Settings2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/", label: "Matchs", icon: ListChecks },
   { href: "/classement", label: "Classement", icon: Trophy },
+  { href: "/profil", label: "Profil", icon: User },
   { href: "/admin", label: "Gérer", icon: Settings2 },
 ];
 
