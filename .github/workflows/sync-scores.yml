@@ -1,0 +1,21 @@
+name: Synchro des scores
+
+# Appelle la route /api/sync-results de l'app pour récupérer les résultats finis
+# du Mondial et mettre à jour le classement automatiquement.
+# (Le cron Vercel gratuit ne tourne qu'1×/jour ; GitHub Actions permet ce rythme gratuitement.)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *" # toutes les 30 minutes (UTC)
+  workflow_dispatch: {} # bouton "Run workflow" pour tester à la main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déclencher la synchro
+        run: |
+          curl -sS --fail-with-body -X GET \
+            "https://la-grille.vercel.app/api/sync-results" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -w "\nHTTP %{http_code}\n"
