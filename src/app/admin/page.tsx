@@ -123,6 +123,7 @@ export default function AdminPage() {
   }
 
   async function signOut() {
+    if (!confirm("Se déconnecter ? Tu pourras revenir en cliquant sur ton profil.")) return;
     await supabase.auth.signOut();
     router.push("/login");
   }
