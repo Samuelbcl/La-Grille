@@ -4,7 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 
 export const metadata: Metadata = {
   title: "La Grille",
-  description: "Le concours de pronos entre potes pour la Coupe du Monde 2026. Fini l'Excel.",
+  description: "Le concours de pronos entre potes pour la Coupe du Monde 2026.",
   manifest: "/manifest.json",
   icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "La Grille" },

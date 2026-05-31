@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { X, ChevronRight } from "lucide-react";
+import { X } from "lucide-react";
 
 type Acc = { email: string; name: string };
 const LS_KEY = "lagrille:accounts";
@@ -133,9 +134,16 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-dvh flex-col justify-center px-6 -mt-8">
       <div className="mb-8 text-center">
-        <div className="text-6xl mb-3">🏆</div>
+        <Image
+          src="/icon-192.png"
+          alt="La Grille"
+          width={84}
+          height={84}
+          priority
+          className="mx-auto mb-3 rounded-[22px] shadow-card"
+        />
         <h1 className="text-3xl font-bold tracking-tight">La Grille</h1>
-        <p className="text-muted mt-1">Le pari entre potes, sans Excel.</p>
+        <p className="text-muted mt-1">Le concours de pronos entre potes.</p>
       </div>
 
       {/* --- Choix du profil --- */}
@@ -164,7 +172,9 @@ export default function LoginPage() {
                   aria-label="Oublier ce profil"
                   onClick={(e) => {
                     e.stopPropagation();
-                    forget(acc.email);
+                    if (confirm(`Oublier le profil de ${acc.name || acc.email} ? Tu devras retaper l'e-mail pour revenir.`)) {
+                      forget(acc.email);
+                    }
                   }}
                   className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-surface-2"
                 >
