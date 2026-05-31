@@ -19,7 +19,8 @@ export default function LoginPage() {
       email,
       options: {
         data: { display_name: name || undefined },
-        emailRedirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+        emailRedirectTo:
+          typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined,
       },
     });
     setLoading(false);

@@ -28,8 +28,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Routes protégées : tout sauf /login
-  const isAuthRoute = request.nextUrl.pathname.startsWith("/login");
+  // Routes protégées : tout sauf /login et le callback d'auth (/auth/...)
+  const path = request.nextUrl.pathname;
+  const isAuthRoute = path.startsWith("/login") || path.startsWith("/auth");
   if (!user && !isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
