@@ -85,12 +85,12 @@ function Row({
   pred?: number | null;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2.5 min-w-0">
         <span className="text-2xl leading-none">{flag(code)}</span>
-        <span className="font-semibold text-[15px]">{name}</span>
+        <span className="font-semibold text-[15px] truncate">{name}</span>
       </div>
-      <span className="tabular-nums text-lg font-bold w-7 text-right">
+      <span className="tabular-nums text-lg font-bold w-7 text-right shrink-0">
         {score != null ? score : pred != null ? <span className="text-muted text-sm">{pred}</span> : "–"}
       </span>
     </div>

@@ -297,31 +297,44 @@ function ResultRow({
   const done = m.status === "finished";
 
   return (
-    <Card className="flex items-center gap-2 px-3 py-2.5">
-      <div className="flex-1 min-w-0 text-sm">
-        <div className="text-[11px] text-muted">{formatKickoff(m.kickoff)}</div>
-        <div className="truncate">
-          {flag(m.team_a_code)} {m.team_a} – {m.team_b} {flag(m.team_b_code)}
-        </div>
+    <Card className="p-3 space-y-2">
+      <div className="text-[11px] text-muted">{formatKickoff(m.kickoff)}</div>
+
+      <div className="flex items-center gap-2.5">
+        <span className="text-xl leading-none">{flag(m.team_a_code)}</span>
+        <span className="flex-1 min-w-0 truncate font-medium">{m.team_a}</span>
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          aria-label={`Score ${m.team_a}`}
+          value={a}
+          onChange={(e) => setA(Math.max(0, Math.floor(+e.target.value || 0)))}
+          className="w-12 h-9 rounded-xl border border-border bg-surface-2 text-center tabular-nums"
+        />
       </div>
-      <input
-        type="number"
-        min={0}
-        inputMode="numeric"
-        value={a}
-        onChange={(e) => setA(Math.max(0, Math.floor(+e.target.value || 0)))}
-        className="w-11 h-10 rounded-xl border border-border bg-surface-2 text-center tabular-nums"
-      />
-      <input
-        type="number"
-        min={0}
-        inputMode="numeric"
-        value={b}
-        onChange={(e) => setB(Math.max(0, Math.floor(+e.target.value || 0)))}
-        className="w-11 h-10 rounded-xl border border-border bg-surface-2 text-center tabular-nums"
-      />
-      <Button size="sm" variant={done ? "secondary" : "primary"} onClick={() => onSave(m, a, b)}>
-        {done ? "Maj" : "OK"}
+
+      <div className="flex items-center gap-2.5">
+        <span className="text-xl leading-none">{flag(m.team_b_code)}</span>
+        <span className="flex-1 min-w-0 truncate font-medium">{m.team_b}</span>
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          aria-label={`Score ${m.team_b}`}
+          value={b}
+          onChange={(e) => setB(Math.max(0, Math.floor(+e.target.value || 0)))}
+          className="w-12 h-9 rounded-xl border border-border bg-surface-2 text-center tabular-nums"
+        />
+      </div>
+
+      <Button
+        size="sm"
+        variant={done ? "secondary" : "primary"}
+        onClick={() => onSave(m, a, b)}
+        className="w-full"
+      >
+        {done ? "Mettre à jour le résultat" : "Valider le résultat"}
       </Button>
     </Card>
   );
