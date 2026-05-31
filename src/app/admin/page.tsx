@@ -27,7 +27,6 @@ type Match = {
   score_b: number | null;
   status: string;
 };
-type Member = { user_id: string; has_paid: boolean; display_name: string };
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -36,7 +35,6 @@ export default function AdminPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [pool, setPool] = useState<Pool | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -70,18 +68,6 @@ export default function AdminPage() {
         .eq("pool_id", p.id)
         .order("kickoff");
       setMatches((ms ?? []) as Match[]);
-
-      const { data: mem } = await supabase
-        .from("pool_members")
-        .select("user_id, has_paid, profiles(display_name)")
-        .eq("pool_id", p.id);
-      setMembers(
-        (mem ?? []).map((m: any) => ({
-          user_id: m.user_id,
-          has_paid: m.has_paid,
-          display_name: m.profiles?.display_name ?? "Joueur",
-        }))
-      );
     } else {
       setPool(null);
     }
@@ -133,16 +119,6 @@ export default function AdminPage() {
       .update({ score_a: sa, score_b: sb, status: "finished" })
       .eq("id", m.id);
     setMsg(error ? `Erreur : ${error.message}` : `Résultat enregistré : ${m.team_a} ${sa}–${sb} ${m.team_b} ✅`);
-    load();
-  }
-
-  async function togglePaid(mem: Member) {
-    if (!pool) return;
-    await supabase
-      .from("pool_members")
-      .update({ has_paid: !mem.has_paid })
-      .eq("pool_id", pool.id)
-      .eq("user_id", mem.user_id);
     load();
   }
 
@@ -229,28 +205,6 @@ export default function AdminPage() {
         </div>
         <p className="text-xs text-muted mt-2">Partage ce code à tes potes pour qu'ils rejoignent.</p>
       </Card>
-
-      {/* Paiements */}
-      <section>
-        <h2 className="font-semibold mb-2">Mises ({pool.buy_in_cents / 100} € / pers.)</h2>
-        <Card className="divide-y divide-border">
-          {members.map((mem) => (
-            <button
-              key={mem.user_id}
-              disabled={!pool.is_admin}
-              onClick={() => togglePaid(mem)}
-              className="flex w-full items-center justify-between px-4 py-3 disabled:opacity-100"
-            >
-              <span className="font-medium">{mem.display_name}</span>
-              <span
-                className={`text-sm font-semibold ${mem.has_paid ? "text-success" : "text-warning"}`}
-              >
-                {mem.has_paid ? "Payé ✓" : "En attente"}
-              </span>
-            </button>
-          ))}
-        </Card>
-      </section>
 
       {pool.is_admin && (
         <>

@@ -15,9 +15,8 @@ export default function ReglesPage() {
         <div>
           <p className="font-semibold">🎯 Le principe</p>
           <p className="text-muted">
-            Chacun verse la même mise et pronostique le score de chaque match. Le
-            participant avec le plus de points à la fin du tournoi remporte toute la
-            cagnotte (égalité → cagnotte partagée).
+            Chacun pronostique le score de chaque match. Le participant avec le plus de
+            points à la fin du tournoi gagne le classement (en cas d'égalité, ex æquo).
           </p>
         </div>
         <div className="h-px bg-border" />

@@ -12,14 +12,13 @@ export default async function ClassementPage() {
   }
 
   const rows = await getLeaderboard(pool.id);
-  const pot = (rows.length * pool.buy_in_cents) / 100;
 
   return (
     <>
       <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
         <h1 className="text-[22px] font-bold tracking-tight">Classement</h1>
         <p className="text-[13px] text-muted">
-          {rows.length} joueur{rows.length > 1 ? "s" : ""} · cagnotte {pot} €
+          {rows.length} joueur{rows.length > 1 ? "s" : ""}
         </p>
       </header>
 
