@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SEED_MATCHES } from "@/data/matches";
 import { flag, formatKickoff } from "@/lib/utils";
-import { LogOut, Copy, Check } from "lucide-react";
+import { LogOut, Copy, Check, Minus, Plus } from "lucide-react";
 
 type Pool = {
   id: string;
@@ -285,6 +285,40 @@ export default function AdminPage() {
   );
 }
 
+function ScoreStepper({
+  value,
+  onChange,
+  label,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <button
+        type="button"
+        aria-label={`Moins — ${label}`}
+        disabled={value <= 0}
+        onClick={() => onChange(Math.max(0, value - 1))}
+        className="grid place-items-center h-9 w-9 rounded-full bg-surface-2 border border-border active:scale-90 transition disabled:opacity-30"
+      >
+        <Minus size={16} />
+      </button>
+      <span className="tabular-nums text-xl font-bold w-6 text-center">{value}</span>
+      <button
+        type="button"
+        aria-label={`Plus — ${label}`}
+        disabled={value >= 20}
+        onClick={() => onChange(value + 1)}
+        className="grid place-items-center h-9 w-9 rounded-full bg-surface-2 border border-border active:scale-90 transition disabled:opacity-30"
+      >
+        <Plus size={16} />
+      </button>
+    </div>
+  );
+}
+
 function ResultRow({
   m,
   onSave,
@@ -303,29 +337,13 @@ function ResultRow({
       <div className="flex items-center gap-2.5">
         <span className="text-xl leading-none">{flag(m.team_a_code)}</span>
         <span className="flex-1 min-w-0 truncate font-medium">{m.team_a}</span>
-        <input
-          type="number"
-          min={0}
-          inputMode="numeric"
-          aria-label={`Score ${m.team_a}`}
-          value={a}
-          onChange={(e) => setA(Math.max(0, Math.floor(+e.target.value || 0)))}
-          className="w-12 h-9 rounded-xl border border-border bg-surface-2 text-center tabular-nums"
-        />
+        <ScoreStepper value={a} onChange={setA} label={m.team_a} />
       </div>
 
       <div className="flex items-center gap-2.5">
         <span className="text-xl leading-none">{flag(m.team_b_code)}</span>
         <span className="flex-1 min-w-0 truncate font-medium">{m.team_b}</span>
-        <input
-          type="number"
-          min={0}
-          inputMode="numeric"
-          aria-label={`Score ${m.team_b}`}
-          value={b}
-          onChange={(e) => setB(Math.max(0, Math.floor(+e.target.value || 0)))}
-          className="w-12 h-9 rounded-xl border border-border bg-surface-2 text-center tabular-nums"
-        />
+        <ScoreStepper value={b} onChange={setB} label={m.team_b} />
       </div>
 
       <Button
