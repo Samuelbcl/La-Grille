@@ -46,6 +46,7 @@ export default function AdminPage() {
       .from("pool_members")
       .select("pool_id, is_admin, pools(*)")
       .eq("user_id", user.id)
+      .order("joined_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 

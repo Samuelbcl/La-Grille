@@ -18,6 +18,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -26,7 +27,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Splash />
         <Onboarding />
-        <main className="mx-auto max-w-md min-h-dvh pb-24">{children}</main>
+        <main className="mx-auto max-w-md min-h-dvh pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+          {children}
+        </main>
         <BottomNav />
       </body>
     </html>

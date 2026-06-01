@@ -12,6 +12,7 @@ export async function getCurrentPool() {
     .from("pool_members")
     .select("pool_id, is_admin, pools(*)")
     .eq("user_id", user.id)
+    .order("joined_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -53,11 +54,18 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
 /** Classement trié. */
 export async function getLeaderboard(poolId: string) {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("v_leaderboard")
-    .select("*")
-    .eq("pool_id", poolId)
-    .order("total_points", { ascending: false })
-    .order("exact_count", { ascending: false });
-  return data ?? [];
+  try {
+    const { data, error } = await supabase
+      .from("v_leaderboard")
+      .select("*")
+      .eq("pool_id", poolId)
+      .order("total_points", { ascending: false })
+      .order("exact_count", { ascending: false })
+      .order("display_name", { ascending: true }); // départage stable
+    if (error) throw error;
+    return data ?? [];
+  } catch (err) {
+    console.error("[getLeaderboard]", err);
+    return [];
+  }
 }

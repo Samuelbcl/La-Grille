@@ -33,14 +33,13 @@ const TLA_FR: Record<string, string> = {
 const pairKey = (x: string, y: string) => [x, y].sort().join("|");
 
 export async function GET(request: Request) {
-  // --- Auth (secret partagé) ---
+  // --- Auth (secret partagé, en-tête Authorization uniquement) ---
   const secret = process.env.CRON_SECRET;
-  const url = new URL(request.url);
-  const provided =
-    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
-    url.searchParams.get("secret") ??
-    "";
+  const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
   if (!secret || provided !== secret) {
+    console.error("[sync-results] tentative non autorisée", {
+      ip: request.headers.get("x-forwarded-for") ?? "?",
+    });
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 

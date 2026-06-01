@@ -16,6 +16,7 @@ jobs:
       - name: Déclencher la synchro
         run: |
           curl -sS --fail-with-body -X GET \
+            --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 30 \
             "https://la-grille.vercel.app/api/sync-results" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -w "\nHTTP %{http_code}\n"

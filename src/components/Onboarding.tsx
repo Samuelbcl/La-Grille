@@ -56,12 +56,12 @@ export function Onboarding() {
           <Step
             icon={<Sparkles size={18} />}
             title="Marque des points"
-            text="Score exact ou bon vainqueur — le barème grimpe en phase finale."
+            text="Bon vainqueur : 2 pts. Score exact : 7 pts."
           />
           <Step
             icon={<Trophy size={18} />}
             title="Grimpe au classement"
-            text="Tout est calculé automatiquement. Le meilleur rafle la mise !"
+            text="Tout est calculé automatiquement. Vise le haut du classement !"
           />
         </div>
         <Button className="mt-6 w-full" onClick={done}>

@@ -198,13 +198,14 @@ export function MatchCard({
             </div>
           )}
           {!finished && !hasPred && locked && (
-            <div className="mt-3 text-[11px] text-muted">Pas de prono (match commencé)</div>
+            <div className="mt-3 text-[11px] text-muted">Tu n&apos;as pas pronostiqué ce match.</div>
           )}
 
           {/* Pronos des potes — visibles seulement après le coup d'envoi */}
           {locked && (
             <div className="mt-3 border-t border-border pt-3">
               <button
+                type="button"
                 onClick={togglePeers}
                 className="flex items-center gap-1.5 text-[12px] font-medium text-accent"
               >

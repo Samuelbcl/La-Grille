@@ -106,8 +106,10 @@ language sql immutable as $$
   end;
 $$;
 
--- Vue : un score calculé par pronostic
-create or replace view public.v_prediction_scores as
+-- Vue : un score calculé par pronostic.
+-- security_invoker=true : la vue applique la RLS de CELUI qui l'interroge
+-- (sinon une vue contourne la RLS → fuite des pronos des autres avant le coup d'envoi).
+create or replace view public.v_prediction_scores with (security_invoker = true) as
 select
   p.id          as prediction_id,
   m.pool_id,
@@ -123,7 +125,8 @@ from public.predictions p
 join public.matches m on m.id = p.match_id;
 
 -- Vue : classement agrégé par pool (le fameux "classement automatique")
-create or replace view public.v_leaderboard as
+-- correct_count = bons vainqueurs SEULS (points = 2), distinct des scores exacts.
+create or replace view public.v_leaderboard with (security_invoker = true) as
 select
   s.pool_id,
   s.user_id,
@@ -131,7 +134,7 @@ select
   pr.avatar_url,
   coalesce(sum(s.points), 0)                            as total_points,
   count(*) filter (where s.is_exact)                    as exact_count,
-  count(*) filter (where s.points > 0)                  as correct_count,
+  count(*) filter (where s.points = 2)                  as correct_count,
   count(*) filter (where s.status = 'finished')         as played_count
 from public.v_prediction_scores s
 join public.profiles pr on pr.id = s.user_id

@@ -34,7 +34,7 @@ export function Avatar({
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt="" loading="lazy" className="h-full w-full object-contain" />
+        <img src={url} alt={`Avatar de ${name}`} loading="lazy" className="h-full w-full object-contain" />
       </span>
     );
   }

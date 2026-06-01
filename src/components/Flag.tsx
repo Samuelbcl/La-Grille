@@ -30,7 +30,7 @@ export function Flag({
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={`https://flagcdn.com/${code.toLowerCase()}.svg`}
-      alt=""
+      alt={`Drapeau ${code.toUpperCase()}`}
       width={w}
       height={size}
       loading="lazy"
