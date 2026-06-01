@@ -24,8 +24,14 @@ export function Avatar({
   if (url) {
     return (
       <span
-        className={`inline-flex shrink-0 items-center justify-center overflow-hidden bg-surface-2 ${className}`}
-        style={{ width: size, height: size, borderRadius: radius }}
+        className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: radius,
+          background:
+            "radial-gradient(circle at 30% 18%, rgba(255,255,255,0.22), transparent 60%), linear-gradient(145deg, #0a1f4d 0%, #1565e6 100%)",
+        }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt="" loading="lazy" className="h-full w-full object-contain" />
