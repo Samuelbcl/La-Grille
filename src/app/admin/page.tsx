@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar } from "@/components/Avatar";
 import { SEED_MATCHES } from "@/data/matches";
 import { LogOut, Copy, Check } from "lucide-react";
 
@@ -15,6 +16,7 @@ type Pool = {
   join_code: string;
   is_admin: boolean;
 };
+type Member = { userId: string; name: string; avatarUrl: string | null; isAdmin: boolean };
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -22,6 +24,7 @@ export default function AdminPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [pool, setPool] = useState<Pool | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
   const [matchCount, setMatchCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -55,6 +58,26 @@ export default function AdminPage() {
         .select("id", { count: "exact", head: true })
         .eq("pool_id", p.id);
       setMatchCount(count ?? 0);
+
+      const { data: mem } = await supabase
+        .from("pool_members")
+        .select("user_id, is_admin, profiles(display_name, avatar_url)")
+        .eq("pool_id", p.id);
+      const rows = (mem ?? []) as unknown as Array<{
+        user_id: string;
+        is_admin: boolean;
+        profiles: { display_name: string; avatar_url: string | null } | null;
+      }>;
+      setMembers(
+        rows
+          .map((r) => ({
+            userId: r.user_id,
+            name: r.profiles?.display_name ?? "Joueur",
+            avatarUrl: r.profiles?.avatar_url ?? null,
+            isAdmin: r.is_admin,
+          }))
+          .sort((a, b) => Number(b.isAdmin) - Number(a.isAdmin))
+      );
     } else {
       setPool(null);
     }
@@ -169,12 +192,32 @@ export default function AdminPage() {
   return (
     <div className="px-5 pt-[calc(env(safe-area-inset-top)+18px)] space-y-6 pb-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Gérer</h1>
+        <h1 className="text-2xl font-bold">Groupe</h1>
         <button onClick={signOut} className="flex items-center gap-1 text-sm text-muted">
           <LogOut size={16} /> Déconnexion
         </button>
       </div>
       {msg && <p className={`text-sm ${msgClass}`}>{msg}</p>}
+
+      {/* Membres du groupe (visibles par tous) */}
+      <Card className="p-5">
+        <h2 className="font-semibold mb-3">
+          {pool.name} · {members.length} membre{members.length > 1 ? "s" : ""}
+        </h2>
+        <div className="space-y-2.5">
+          {members.map((mem) => (
+            <div key={mem.userId} className="flex items-center gap-3">
+              <Avatar url={mem.avatarUrl} name={mem.name} size={36} />
+              <span className="min-w-0 flex-1 truncate font-medium">{mem.name}</span>
+              {mem.isAdmin && (
+                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-accent">
+                  Organisateur
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </Card>
 
       {pool.is_admin ? (
         <>
@@ -238,14 +281,10 @@ export default function AdminPage() {
           </Card>
         </>
       ) : (
-        <Card className="p-5 space-y-2">
-          <h2 className="font-semibold">Ton groupe</h2>
+        <Card className="p-5">
           <p className="text-sm text-muted">
-            Tu participes à <b>{pool.name}</b>. C&apos;est l&apos;organisateur qui gère le groupe
-            (matchs, résultats…).
-          </p>
-          <p className="text-sm text-muted">
-            Pour partir, utilise <b>Déconnexion</b> (en haut à droite, ou dans l&apos;onglet Profil).
+            C&apos;est l&apos;organisateur qui gère le groupe (matchs, résultats…). Pour partir,
+            utilise <b>Déconnexion</b> (en haut à droite ou dans l&apos;onglet Profil).
           </p>
         </Card>
       )}
