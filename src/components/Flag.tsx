@@ -1,7 +1,7 @@
 /**
  * Drapeau en image (via flagcdn.com) à partir d'un code ISO (ex: "fr", "gb-eng").
- * Hauteur fixe, largeur automatique → le drapeau s'affiche toujours en entier
- * (on ne force pas le ratio, donc pas de rognage). `size` = hauteur en px.
+ * Tous les drapeaux ont le MÊME gabarit (boîte 3:2) et sont affichés EN ENTIER
+ * (object-contain → aucun rognage). `size` = hauteur en px (largeur = 1,5×).
  */
 export function Flag({
   code,
@@ -12,21 +12,31 @@ export function Flag({
   size?: number;
   className?: string;
 }) {
+  const w = Math.round(size * 1.5);
+
   if (!code) {
     return (
-      <span style={{ fontSize: size }} className={className}>
+      <span
+        className={`inline-flex shrink-0 items-center justify-center align-middle ${className}`}
+        style={{ width: w, height: size, fontSize: Math.round(size * 0.85) }}
+      >
         🏳️
       </span>
     );
   }
+
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={`https://flagcdn.com/${code.toLowerCase()}.svg`}
-      alt=""
-      loading="lazy"
-      className={`inline-block shrink-0 rounded-[3px] object-contain align-middle ring-1 ring-black/10 ${className}`}
-      style={{ height: size, width: "auto" }}
-    />
+    <span
+      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-surface-2 align-middle ring-1 ring-black/10 ${className}`}
+      style={{ width: w, height: size }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={`https://flagcdn.com/${code.toLowerCase()}.svg`}
+        alt=""
+        loading="lazy"
+        className="h-full w-full object-contain"
+      />
+    </span>
   );
 }
