@@ -80,13 +80,10 @@ export default function AdminPage() {
 
   async function joinPool() {
     if (!userId || !code) return;
-    const { data: p, error } = await supabase
-      .from("pools")
-      .select("id")
-      .eq("join_code", code.toUpperCase())
-      .maybeSingle();
-    if (error || !p) return setMsg("Code introuvable.");
-    await supabase.from("pool_members").insert({ pool_id: p.id, user_id: userId });
+    const { error } = await supabase.rpc("join_pool", { p_code: code });
+    if (error) {
+      return setMsg(error.message.includes("introuvable") ? "Code introuvable." : `Erreur : ${error.message}`);
+    }
     setCode("");
     load();
   }
