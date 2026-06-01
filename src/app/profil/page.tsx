@@ -3,14 +3,10 @@ import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentPool, getLeaderboard } from "@/lib/queries";
 import { SignOutButton } from "@/components/SignOutButton";
+import { Avatar } from "@/components/Avatar";
+import { AvatarPicker } from "@/components/AvatarPicker";
 
 export const dynamic = "force-dynamic";
-
-function avatarColor(s: string): string {
-  let h = 0;
-  for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `hsl(${h % 360} 60% 45%)`;
-}
 
 function Stat({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) {
   return (
@@ -30,13 +26,15 @@ export default async function ProfilPage() {
 
   // Nom affiché
   let name = user?.email?.split("@")[0] ?? "Joueur";
+  let avatarUrl: string | null = null;
   if (user) {
     const { data: prof } = await supabase
       .from("profiles")
-      .select("display_name")
+      .select("display_name, avatar_url")
       .eq("id", user.id)
       .maybeSingle();
     if (prof?.display_name) name = prof.display_name;
+    avatarUrl = prof?.avatar_url ?? null;
   }
 
   // Stats depuis le classement
@@ -71,12 +69,7 @@ export default async function ProfilPage() {
       <div className="px-4 py-4 space-y-5">
         {/* Identité */}
         <div className="flex items-center gap-3.5">
-          <span
-            className="grid h-16 w-16 shrink-0 place-items-center rounded-full text-2xl font-bold text-white"
-            style={{ backgroundColor: avatarColor(name) }}
-          >
-            {name.charAt(0).toUpperCase()}
-          </span>
+          <Avatar url={avatarUrl} name={name} size={64} />
           <div className="min-w-0">
             <p className="text-xl font-bold truncate">{name}</p>
             <p className="text-sm text-muted truncate">
@@ -103,6 +96,11 @@ export default async function ProfilPage() {
             Rejoins un pool depuis l'onglet <b>Gérer</b> pour voir tes stats.
           </p>
         )}
+
+        {/* Choix de l'avatar */}
+        <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
+          <AvatarPicker current={avatarUrl} />
+        </div>
 
         {/* Liens */}
         <div className="rounded-2xl bg-surface border border-border shadow-card divide-y divide-border">

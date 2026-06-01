@@ -1,7 +1,8 @@
 /**
  * Drapeau en image (via flagcdn.com) à partir d'un code ISO (ex: "fr", "gb-eng").
- * Tous les drapeaux ont le MÊME gabarit (boîte 3:2) et sont affichés EN ENTIER
- * (object-contain → aucun rognage). `size` = hauteur en px (largeur = 1,5×).
+ * Tous les drapeaux ont EXACTEMENT le même gabarit (boîte 3:2) et remplissent le
+ * cadre (object-cover) → aucun bord/letterbox, quitte à rogner légèrement.
+ * `size` = hauteur en px (largeur = 1,5×).
  */
 export function Flag({
   code,
@@ -26,17 +27,15 @@ export function Flag({
   }
 
   return (
-    <span
-      className={`inline-flex shrink-0 items-center justify-center overflow-hidden rounded-[3px] bg-surface-2 align-middle ring-1 ring-black/10 ${className}`}
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={`https://flagcdn.com/${code.toLowerCase()}.svg`}
+      alt=""
+      width={w}
+      height={size}
+      loading="lazy"
+      className={`inline-block shrink-0 rounded-[3px] object-cover align-middle ring-1 ring-black/10 ${className}`}
       style={{ width: w, height: size }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`https://flagcdn.com/${code.toLowerCase()}.svg`}
-        alt=""
-        loading="lazy"
-        className="h-full w-full object-contain"
-      />
-    </span>
+    />
   );
 }

@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
+import { Avatar } from "@/components/Avatar";
 import type { TeamStanding } from "@/lib/standings";
 
 export type LbRow = {
   user_id: string;
   display_name: string;
+  avatar_url: string | null;
   total_points: number;
   exact_count: number;
   correct_count: number;
@@ -17,24 +19,17 @@ export type LbRow = {
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-function avatarColor(s: string): string {
-  let h = 0;
-  for (const c of s || "?") h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `hsl(${h % 360} 60% 45%)`;
-}
-
 function PodiumSpot({ row, place, me }: { row: LbRow; place: 1 | 2 | 3; me: boolean }) {
-  const avatar = place === 1 ? "h-16 w-16 text-2xl" : "h-14 w-14 text-xl";
   const ped = place === 1 ? "h-20" : place === 2 ? "h-14" : "h-10";
   return (
     <div className="flex w-1/3 flex-col items-center">
       <div className="text-2xl">{MEDALS[place - 1]}</div>
-      <span
-        className={`mt-1 grid ${avatar} place-items-center rounded-full font-bold text-white ${me ? "ring-2 ring-accent" : ""}`}
-        style={{ backgroundColor: avatarColor(row.display_name) }}
-      >
-        {(row.display_name || "?").charAt(0).toUpperCase()}
-      </span>
+      <Avatar
+        url={row.avatar_url}
+        name={row.display_name}
+        size={place === 1 ? 64 : 56}
+        className={`mt-1 ${me ? "ring-2 ring-accent" : ""}`}
+      />
       <p className="mt-1.5 max-w-full truncate px-1 text-[13px] font-semibold">{row.display_name}</p>
       <p className="text-[12px] font-bold tabular-nums text-accent">{row.total_points} pts</p>
       <div className={`mt-2 grid w-full ${ped} place-items-end justify-center rounded-t-xl border border-b-0 border-border bg-surface-2`}>
@@ -48,12 +43,7 @@ function RankRow({ row, rank, me }: { row: LbRow; rank: number; me: boolean }) {
   return (
     <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-card ${me ? "border-accent" : "border-border bg-surface"}`}>
       <span className="w-5 text-center text-sm font-bold tabular-nums text-muted">{rank}</span>
-      <span
-        className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
-        style={{ backgroundColor: avatarColor(row.display_name) }}
-      >
-        {(row.display_name || "?").charAt(0).toUpperCase()}
-      </span>
+      <Avatar url={row.avatar_url} name={row.display_name} size={36} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">
           {row.display_name}
