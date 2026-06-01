@@ -212,12 +212,19 @@ export default function AdminPage() {
               </Button>
             </Card>
           ) : (
-            <Card className="p-5 space-y-2">
+            <Card className="p-5 space-y-3">
               <h2 className="font-semibold">Résultats</h2>
               <p className="text-sm text-muted">
                 ✅ {matchCount} matchs chargés. Les scores se remplissent{" "}
                 <b>automatiquement</b> dès qu&apos;un match est terminé, et le classement se met à
                 jour tout seul — rien à saisir.
+              </p>
+              <Button variant="secondary" onClick={importMatches} className="w-full">
+                Mettre à jour les matchs
+              </Button>
+              <p className="text-xs text-muted">
+                Rafraîchit équipes, drapeaux et horaires depuis le calendrier officiel (sans toucher
+                aux pronos ni aux scores déjà saisis).
               </p>
             </Card>
           )}

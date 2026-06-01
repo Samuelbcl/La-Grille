@@ -53,7 +53,7 @@ const VENUE = {
 const CODE = {
   Mexique: "mx", "Afrique du Sud": "za", "Corée du Sud": "kr", Tchéquie: "cz",
   Canada: "ca", "Bosnie-Herzégovine": "ba", Qatar: "qa", Suisse: "ch",
-  Brésil: "br", Maroc: "ma", Haïti: "ht", Écosse: "gb",
+  Brésil: "br", Maroc: "ma", Haïti: "ht", Écosse: "gb-sct",
   "États-Unis": "us", Paraguay: "py", Australie: "au", Turquie: "tr",
   Allemagne: "de", Curaçao: "cw", "Côte d'Ivoire": "ci", Équateur: "ec",
   "Pays-Bas": "nl", Japon: "jp", Suède: "se", Tunisie: "tn",
@@ -62,7 +62,7 @@ const CODE = {
   France: "fr", Sénégal: "sn", Irak: "iq", Norvège: "no",
   Argentine: "ar", Algérie: "dz", Autriche: "at", Jordanie: "jo",
   Portugal: "pt", "RD Congo": "cd", Ouzbékistan: "uz", Colombie: "co",
-  Angleterre: "gb", Croatie: "hr", Ghana: "gh", Panama: "pa",
+  Angleterre: "gb-eng", Croatie: "hr", Ghana: "gh", Panama: "pa",
 };
 
 // Les 72 matchs : [groupe, kickoff UTC, clé stade, équipe A, équipe B].
