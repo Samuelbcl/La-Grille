@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
+import { Splash } from "@/components/Splash";
 
 export const metadata: Metadata = {
   title: "La Grille",
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
+        <Splash />
         <main className="mx-auto max-w-md min-h-dvh pb-24">{children}</main>
         <BottomNav />
       </body>

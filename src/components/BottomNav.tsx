@@ -6,11 +6,11 @@ import { Trophy, ListChecks, Settings2, User, CalendarDays } from "lucide-react"
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { href: "/", label: "Matchs", icon: ListChecks },
   { href: "/aujourdhui", label: "Aujourd'hui", icon: CalendarDays },
+  { href: "/", label: "Matchs", icon: ListChecks },
   { href: "/classement", label: "Classement", icon: Trophy },
-  { href: "/profil", label: "Profil", icon: User },
   { href: "/admin", label: "Gérer", icon: Settings2 },
+  { href: "/profil", label: "Profil", icon: User },
 ];
 
 export function BottomNav() {

@@ -219,6 +219,9 @@ create policy "pools insert own" on public.pools for insert
 drop policy if exists "pools update owner" on public.pools;
 create policy "pools update owner" on public.pools for update
   using (owner_id = auth.uid());
+drop policy if exists "pools delete owner" on public.pools;
+create policy "pools delete owner" on public.pools for delete
+  using (owner_id = auth.uid());
 
 -- POOL MEMBERS
 drop policy if exists "members read same pool" on public.pool_members;

@@ -4,7 +4,7 @@
   "description": "Le concours de pronos entre potes pour la Coupe du Monde 2026.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f5f7",
+  "background_color": "#0a1f4d",
   "theme_color": "#f5f5f7",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },

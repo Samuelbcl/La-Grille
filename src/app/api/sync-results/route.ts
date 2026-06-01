@@ -54,9 +54,9 @@ export async function GET(request: Request) {
     );
   }
 
-  // --- 1) Résultats terminés depuis football-data.org ---
+  // --- 1) Tous les matchs du Mondial depuis football-data.org (l'API fait foi) ---
   const res = await fetch(
-    "https://api.football-data.org/v4/competitions/WC/matches?status=FINISHED",
+    "https://api.football-data.org/v4/competitions/WC/matches",
     { headers: { "X-Auth-Token": token }, cache: "no-store" }
   );
   if (!res.ok) {
@@ -64,16 +64,20 @@ export async function GET(request: Request) {
   }
   const data = await res.json();
 
-  // --- 2) Index par paire d'équipes (phase de poules) ---
-  const apiByPair = new Map<string, { home: string; away: string; hs: number; as: number }>();
+  // --- 2) Index par paire d'équipes (phase de poules) : état + score ---
+  const apiByPair = new Map<
+    string,
+    { home: string; away: string; finished: boolean; hs: number | null; as: number | null }
+  >();
   for (const m of data.matches ?? []) {
     if (m.stage !== "GROUP_STAGE") continue;
     const home = TLA_FR[m.homeTeam?.tla];
     const away = TLA_FR[m.awayTeam?.tla];
+    if (!home || !away) continue;
     const hs = m.score?.fullTime?.home;
     const as = m.score?.fullTime?.away;
-    if (!home || !away || hs == null || as == null) continue;
-    apiByPair.set(pairKey(home, away), { home, away, hs, as });
+    const isFinished = m.status === "FINISHED" && hs != null && as != null;
+    apiByPair.set(pairKey(home, away), { home, away, finished: isFinished, hs, as });
   }
 
   // --- 3) Nos matchs de poule (tous pools confondus) ---
@@ -86,25 +90,37 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // --- 4) Mise à jour des scores (orientation respectée) ---
-  let updated = 0;
+  // --- 4) Réconciliation : l'API fait foi (remplit OU réinitialise) ---
+  let filled = 0;
+  let reset = 0;
   for (const r of rows ?? []) {
     const result = apiByPair.get(pairKey(r.team_a, r.team_b));
     if (!result) continue;
-    const scoreA = r.team_a === result.home ? result.hs : result.as;
-    const scoreB = r.team_a === result.home ? result.as : result.hs;
-    if (r.status === "finished" && r.score_a === scoreA && r.score_b === scoreB) continue; // déjà à jour
-    const { error: upErr } = await admin
-      .from("matches")
-      .update({ score_a: scoreA, score_b: scoreB, status: "finished" })
-      .eq("id", r.id);
-    if (!upErr) updated++;
+
+    if (result.finished) {
+      const scoreA = r.team_a === result.home ? result.hs : result.as;
+      const scoreB = r.team_a === result.home ? result.as : result.hs;
+      if (r.status === "finished" && r.score_a === scoreA && r.score_b === scoreB) continue; // déjà à jour
+      const { error: upErr } = await admin
+        .from("matches")
+        .update({ score_a: scoreA, score_b: scoreB, status: "finished" })
+        .eq("id", r.id);
+      if (!upErr) filled++;
+    } else if (r.status === "finished" || r.score_a !== null || r.score_b !== null) {
+      // L'API dit que le match n'est pas (encore) joué → on annule un résultat erroné.
+      const { error: upErr } = await admin
+        .from("matches")
+        .update({ score_a: null, score_b: null, status: "scheduled" })
+        .eq("id", r.id);
+      if (!upErr) reset++;
+    }
   }
 
   return NextResponse.json({
     ok: true,
-    resultatsApi: apiByPair.size,
+    resultatsApiFinis: [...apiByPair.values()].filter((v) => v.finished).length,
     nosMatchsPoule: rows?.length ?? 0,
-    misAJour: updated,
+    scoresRemplis: filled,
+    matchsReinitialises: reset,
   });
 }

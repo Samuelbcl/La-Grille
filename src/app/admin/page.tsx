@@ -7,26 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEED_MATCHES } from "@/data/matches";
-import { flag, formatKickoff } from "@/lib/utils";
-import { LogOut, Copy, Check, Minus, Plus } from "lucide-react";
+import { LogOut, Copy, Check } from "lucide-react";
 
 type Pool = {
   id: string;
   name: string;
   join_code: string;
-  buy_in_cents: number;
   is_admin: boolean;
-};
-type Match = {
-  id: string;
-  kickoff: string;
-  team_a: string;
-  team_a_code: string | null;
-  team_b: string;
-  team_b_code: string | null;
-  score_a: number | null;
-  score_b: number | null;
-  status: string;
 };
 
 export default function AdminPage() {
@@ -35,7 +22,7 @@ export default function AdminPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
   const [pool, setPool] = useState<Pool | null>(null);
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matchCount, setMatchCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -63,12 +50,11 @@ export default function AdminPage() {
       const p = pm.pools as unknown as Omit<Pool, "is_admin">;
       setPool({ ...p, is_admin: pm.is_admin });
 
-      const { data: ms } = await supabase
+      const { count } = await supabase
         .from("matches")
-        .select("*")
-        .eq("pool_id", p.id)
-        .order("kickoff");
-      setMatches((ms ?? []) as Match[]);
+        .select("id", { count: "exact", head: true })
+        .eq("pool_id", p.id);
+      setMatchCount(count ?? 0);
     } else {
       setPool(null);
     }
@@ -86,8 +72,9 @@ export default function AdminPage() {
       .insert({ name: poolName, owner_id: userId })
       .select()
       .single();
-    if (error) return setMsg(error.message);
+    if (error) return setMsg(`Erreur : ${error.message}`);
     await supabase.from("pool_members").insert({ pool_id: p.id, user_id: userId, is_admin: true });
+    setPoolName("");
     load();
   }
 
@@ -100,6 +87,7 @@ export default function AdminPage() {
       .maybeSingle();
     if (error || !p) return setMsg("Code introuvable.");
     await supabase.from("pool_members").insert({ pool_id: p.id, user_id: userId });
+    setCode("");
     load();
   }
 
@@ -107,19 +95,20 @@ export default function AdminPage() {
     if (!pool) return;
     const rows = SEED_MATCHES.map((m) => ({ ...m, pool_id: pool.id }));
     const { error } = await supabase.from("matches").upsert(rows, { onConflict: "pool_id,match_no" });
-    setMsg(error ? error.message : `${rows.length} matchs importés ✅`);
+    setMsg(error ? `Erreur : ${error.message}` : `${rows.length} matchs importés ✅`);
     load();
   }
 
-  async function saveResult(m: Match, a: number, b: number) {
-    // Garde-fou : scores entiers positifs uniquement (l'input peut renvoyer NaN).
-    const sa = Number.isFinite(a) ? Math.max(0, Math.floor(a)) : 0;
-    const sb = Number.isFinite(b) ? Math.max(0, Math.floor(b)) : 0;
-    const { error } = await supabase
-      .from("matches")
-      .update({ score_a: sa, score_b: sb, status: "finished" })
-      .eq("id", m.id);
-    setMsg(error ? `Erreur : ${error.message}` : `Résultat enregistré : ${m.team_a} ${sa}–${sb} ${m.team_b} ✅`);
+  async function deletePool() {
+    if (!pool) return;
+    if (!confirm(`Supprimer le pool « ${pool.name} » ? Tous les matchs, pronos et le classement seront perdus.`))
+      return;
+    if (!confirm("Confirmer : cette suppression est définitive.")) return;
+    const { error } = await supabase.from("pools").delete().eq("id", pool.id);
+    if (error) return setMsg(`Erreur : ${error.message}`);
+    setPool(null);
+    setMatchCount(0);
+    setMsg(null);
     load();
   }
 
@@ -138,20 +127,18 @@ export default function AdminPage() {
       </div>
     );
 
+  const msgClass = msg && (msg.startsWith("Erreur") || msg === "Code introuvable.") ? "text-[#ff3b30]" : "text-accent";
+
   // --- Aucun pool : créer ou rejoindre ---
   if (!pool) {
     return (
       <div className="px-5 pt-[calc(env(safe-area-inset-top)+18px)] space-y-6">
         <h1 className="text-2xl font-bold">Mon pool</h1>
-        {msg && (
-        <p className={`text-sm ${msg.startsWith("Erreur") || msg === "Code introuvable." ? "text-[#ff3b30]" : "text-accent"}`}>
-          {msg}
-        </p>
-      )}
+        {msg && <p className={`text-sm ${msgClass}`}>{msg}</p>}
 
         <Card className="p-5 space-y-3">
           <h2 className="font-semibold">Créer un pool</h2>
-          <p className="text-sm text-muted">Tu deviens l'organisateur (saisie des résultats).</p>
+          <p className="text-sm text-muted">Tu deviens l&apos;organisateur du pool.</p>
           <input
             value={poolName}
             onChange={(e) => setPoolName(e.target.value)}
@@ -165,7 +152,7 @@ export default function AdminPage() {
 
         <Card className="p-5 space-y-3">
           <h2 className="font-semibold">Rejoindre un pool</h2>
-          <p className="text-sm text-muted">Avec le code à 6 caractères de l'organisateur.</p>
+          <p className="text-sm text-muted">Avec le code à 6 caractères de l&apos;organisateur.</p>
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -190,15 +177,11 @@ export default function AdminPage() {
           <LogOut size={16} /> Déconnexion
         </button>
       </div>
-      {msg && (
-        <p className={`text-sm ${msg.startsWith("Erreur") || msg === "Code introuvable." ? "text-[#ff3b30]" : "text-accent"}`}>
-          {msg}
-        </p>
-      )}
+      {msg && <p className={`text-sm ${msgClass}`}>{msg}</p>}
 
       {/* Code d'invitation */}
       <Card className="p-5">
-        <p className="text-sm text-muted mb-1">Code d'invitation</p>
+        <p className="text-sm text-muted mb-1">Code d&apos;invitation</p>
         <div className="flex items-center justify-between">
           <span className="text-3xl font-mono font-bold tracking-widest">{pool.join_code}</span>
           <button
@@ -212,111 +195,45 @@ export default function AdminPage() {
             {copied ? <Check size={18} /> : <Copy size={18} />} {copied ? "Copié" : "Copier"}
           </button>
         </div>
-        <p className="text-xs text-muted mt-2">Partage ce code à tes potes pour qu'ils rejoignent.</p>
+        <p className="text-xs text-muted mt-2">Partage ce code à tes potes pour qu&apos;ils rejoignent.</p>
       </Card>
 
       {pool.is_admin && (
         <>
           {/* Import des matchs */}
-          {matches.length === 0 && (
+          {matchCount === 0 ? (
             <Card className="p-5 space-y-3">
               <h2 className="font-semibold">Importer les matchs</h2>
               <p className="text-sm text-muted">
-                Charge les 72 matchs de la phase de poules (calendrier officiel). L'import
-                est idempotent : tu peux le relancer après une correction dans src/data/matches.ts.
+                Charge les 72 matchs de la phase de poules (calendrier officiel).
               </p>
               <Button onClick={importMatches} className="w-full">
                 Importer les matchs
               </Button>
             </Card>
+          ) : (
+            <Card className="p-5 space-y-2">
+              <h2 className="font-semibold">Résultats</h2>
+              <p className="text-sm text-muted">
+                ✅ {matchCount} matchs chargés. Les scores se remplissent{" "}
+                <b>automatiquement</b> dès qu&apos;un match est terminé, et le classement se met à
+                jour tout seul — rien à saisir.
+              </p>
+            </Card>
           )}
 
-          {/* Saisie des résultats */}
-          {matches.length > 0 && (
-            <section>
-              <h2 className="font-semibold mb-2">Saisir les résultats</h2>
-              <div className="space-y-2">
-                {matches.map((m) => (
-                  <ResultRow key={m.id} m={m} onSave={saveResult} />
-                ))}
-              </div>
-            </section>
-          )}
+          {/* Zone de danger : supprimer le pool */}
+          <Card className="p-5 space-y-3">
+            <h2 className="font-semibold text-[#ff3b30]">Zone de danger</h2>
+            <p className="text-sm text-muted">
+              Supprime définitivement ce pool (matchs, pronos et classement). Pour repartir de zéro.
+            </p>
+            <Button variant="danger" onClick={deletePool} className="w-full">
+              Supprimer ce pool
+            </Button>
+          </Card>
         </>
       )}
     </div>
-  );
-}
-
-function ScoreStepper({
-  value,
-  onChange,
-  label,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 shrink-0">
-      <button
-        type="button"
-        aria-label={`Moins — ${label}`}
-        disabled={value <= 0}
-        onClick={() => onChange(Math.max(0, value - 1))}
-        className="grid place-items-center h-9 w-9 rounded-full bg-surface-2 border border-border active:scale-90 transition disabled:opacity-30"
-      >
-        <Minus size={16} />
-      </button>
-      <span className="tabular-nums text-xl font-bold w-6 text-center">{value}</span>
-      <button
-        type="button"
-        aria-label={`Plus — ${label}`}
-        disabled={value >= 20}
-        onClick={() => onChange(value + 1)}
-        className="grid place-items-center h-9 w-9 rounded-full bg-surface-2 border border-border active:scale-90 transition disabled:opacity-30"
-      >
-        <Plus size={16} />
-      </button>
-    </div>
-  );
-}
-
-function ResultRow({
-  m,
-  onSave,
-}: {
-  m: Match;
-  onSave: (m: Match, a: number, b: number) => void;
-}) {
-  const [a, setA] = useState(m.score_a ?? 0);
-  const [b, setB] = useState(m.score_b ?? 0);
-  const done = m.status === "finished";
-
-  return (
-    <Card className="p-3 space-y-2">
-      <div className="text-[11px] text-muted">{formatKickoff(m.kickoff)}</div>
-
-      <div className="flex items-center gap-2.5">
-        <span className="text-xl leading-none">{flag(m.team_a_code)}</span>
-        <span className="flex-1 min-w-0 truncate font-medium">{m.team_a}</span>
-        <ScoreStepper value={a} onChange={setA} label={m.team_a} />
-      </div>
-
-      <div className="flex items-center gap-2.5">
-        <span className="text-xl leading-none">{flag(m.team_b_code)}</span>
-        <span className="flex-1 min-w-0 truncate font-medium">{m.team_b}</span>
-        <ScoreStepper value={b} onChange={setB} label={m.team_b} />
-      </div>
-
-      <Button
-        size="sm"
-        variant={done ? "secondary" : "primary"}
-        onClick={() => onSave(m, a, b)}
-        className="w-full"
-      >
-        {done ? "Mettre à jour le résultat" : "Valider le résultat"}
-      </Button>
-    </Card>
   );
 }
