@@ -14,22 +14,15 @@ export default async function CalendrierPage() {
         <div className="text-5xl mb-4">⚽️</div>
         <h1 className="text-2xl font-bold">Bienvenue !</h1>
         <p className="text-muted mt-2 mb-6">
-          Crée ton groupe de pronos, ou rejoins celui de tes potes avec un code.
+          Crée ton groupe de pronos, ou rejoins celui de tes potes avec un code,
+          depuis l&apos;onglet <b>Gérer</b>.
         </p>
-        <div className="mx-auto max-w-xs space-y-2">
-          <Link
-            href="/admin"
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-accent font-semibold text-accent-fg shadow-card active:scale-[0.98] transition"
-          >
-            Créer un groupe
-          </Link>
-          <Link
-            href="/admin"
-            className="flex h-12 w-full items-center justify-center rounded-2xl border border-border bg-surface-2 font-semibold active:scale-[0.98] transition"
-          >
-            Rejoindre avec un code
-          </Link>
-        </div>
+        <Link
+          href="/admin"
+          className="inline-flex h-12 items-center justify-center rounded-2xl bg-accent px-6 font-semibold text-accent-fg shadow-card active:scale-[0.98] transition"
+        >
+          Créer ou rejoindre un groupe →
+        </Link>
       </div>
     );
   }
