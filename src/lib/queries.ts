@@ -31,16 +31,11 @@ export async function getCurrentPool() {
 export async function getMatchesWithPredictions(poolId: string, userId: string) {
   const supabase = await createClient();
 
-  const { data: matches } = await supabase
-    .from("matches")
-    .select("*")
-    .eq("pool_id", poolId)
-    .order("kickoff", { ascending: true });
-
-  const { data: preds } = await supabase
-    .from("predictions")
-    .select("match_id, pred_a, pred_b")
-    .eq("user_id", userId);
+  // Les deux requêtes en parallèle (au lieu de l'une après l'autre) → 1 aller-retour gagné.
+  const [{ data: matches }, { data: preds }] = await Promise.all([
+    supabase.from("matches").select("*").eq("pool_id", poolId).order("kickoff", { ascending: true }),
+    supabase.from("predictions").select("match_id, pred_a, pred_b").eq("user_id", userId),
+  ]);
 
   const byMatch = new Map((preds ?? []).map((p) => [p.match_id, p]));
 
