@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar } from "@/components/Avatar";
 import { SEED_MATCHES } from "@/data/matches";
-import { LogOut, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 
 type Pool = {
   id: string;
@@ -133,12 +133,6 @@ export default function AdminPage() {
     load();
   }
 
-  async function signOut() {
-    if (!confirm("Se déconnecter ? Tu pourras revenir en cliquant sur ton profil.")) return;
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
   if (loading)
     return (
       <div className="px-5 pt-[calc(env(safe-area-inset-top)+18px)] space-y-4">
@@ -192,12 +186,7 @@ export default function AdminPage() {
   // --- Pool existant ---
   return (
     <div className="px-5 pt-[calc(env(safe-area-inset-top)+18px)] space-y-6 pb-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Groupe</h1>
-        <button onClick={signOut} className="flex items-center gap-1 text-sm text-muted">
-          <LogOut size={16} /> Déconnexion
-        </button>
-      </div>
+      <h1 className="text-2xl font-bold">Groupe</h1>
       {msg && <p className={`text-sm ${msgClass}`}>{msg}</p>}
 
       {/* Membres du groupe (visibles par tous) */}
@@ -284,8 +273,8 @@ export default function AdminPage() {
       ) : (
         <Card className="p-5">
           <p className="text-sm text-muted">
-            C&apos;est l&apos;organisateur qui gère le groupe (matchs, résultats…). Pour partir,
-            utilise <b>Déconnexion</b> (en haut à droite ou dans l&apos;onglet Profil).
+            C&apos;est l&apos;organisateur qui gère le groupe (matchs, résultats…). Pour te
+            déconnecter, va dans l&apos;onglet <b>Profil</b>.
           </p>
         </Card>
       )}
