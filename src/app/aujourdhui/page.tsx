@@ -4,7 +4,7 @@ import { isToday } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-function Header() {
+function Header({ pending = 0 }: { pending?: number }) {
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long",
     day: "numeric",
@@ -13,7 +13,12 @@ function Header() {
   return (
     <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
       <h1 className="text-[22px] font-bold tracking-tight">Aujourd&apos;hui</h1>
-      <p className="text-[13px] text-muted capitalize">{today}</p>
+      <p className="text-[13px]">
+        <span className="capitalize text-muted">{today}</span>
+        {pending > 0 && (
+          <span className="font-semibold text-warning"> · {pending} à pronostiquer</span>
+        )}
+      </p>
     </header>
   );
 }
@@ -34,14 +39,15 @@ export default async function AujourdhuiPage() {
   const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
   const now = Date.now();
   const todayMatches = matches.filter((m) => isToday(m.kickoff));
-  const toPredict = matches
-    .filter((m) => new Date(m.kickoff).getTime() > now && m.pred_a == null)
-    .slice(0, 8);
+  const upcomingUnpredicted = matches.filter(
+    (m) => new Date(m.kickoff).getTime() > now && m.pred_a == null
+  );
+  const toPredict = upcomingUnpredicted.slice(0, 8);
   const nothing = todayMatches.length === 0 && toPredict.length === 0;
 
   return (
     <>
-      <Header />
+      <Header pending={upcomingUnpredicted.length} />
       <div className="px-4 py-4 space-y-6">
         {nothing ? (
           <p className="pt-12 text-center text-muted">
