@@ -45,7 +45,12 @@ export default async function ClassementPage() {
         </p>
       </header>
 
-      <ClassementView players={players} standings={standings} me={pool.user_id as string} />
+      <ClassementView
+        players={players}
+        standings={standings}
+        me={pool.user_id as string}
+        poolId={pool.id as string}
+      />
     </>
   );
 }

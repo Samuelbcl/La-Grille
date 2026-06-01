@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 import type { TeamStanding } from "@/lib/standings";
@@ -128,13 +130,32 @@ export function ClassementView({
   players,
   standings,
   me,
+  poolId,
 }: {
   players: LbRow[];
   standings: Record<string, TeamStanding[]>;
   me: string;
+  poolId: string;
 }) {
+  const router = useRouter();
   const [tab, setTab] = useState<"players" | "groups">("players");
   const groupLabels = Object.keys(standings).sort();
+
+  // Temps réel : rafraîchit le classement dès qu'un score de match change.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`leaderboard-${poolId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "matches", filter: `pool_id=eq.${poolId}` },
+        () => router.refresh()
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [poolId, router]);
 
   return (
     <div className="px-4 py-4">

@@ -308,5 +308,14 @@ create policy "predictions update" on public.predictions for update
   );
 
 -- =====================================================================
+--  REALTIME — diffuser les changements de matchs (classement en direct)
+-- =====================================================================
+do $$
+begin
+  alter publication supabase_realtime add table public.matches;
+exception when duplicate_object then null;
+end $$;
+
+-- =====================================================================
 --  FIN DU SCHÉMA
 -- =====================================================================
