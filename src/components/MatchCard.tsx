@@ -189,17 +189,17 @@ export function MatchCard({
         </div>
       ) : (
         <>
-          <Row name={m.team_a} code={m.team_a_code} score={finished ? m.score_a : null} pred={predA} />
+          <Row name={m.team_a} code={m.team_a_code} score={m.score_a} />
           <div className="h-px bg-border my-2" />
-          <Row name={m.team_b} code={m.team_b_code} score={finished ? m.score_b : null} pred={predB} />
+          <Row name={m.team_b} code={m.team_b_code} score={m.score_b} />
 
-          {badge && <div className={`mt-3 text-[11px] font-semibold ${badge.cls}`}>{badge.text}</div>}
-          {!finished && hasPred && (
+          {hasPred && (
             <div className="mt-3 text-[11px] text-muted">
               Ton prono : <span className="text-text font-semibold">{predA} – {predB}</span>
             </div>
           )}
-          {!finished && !hasPred && locked && (
+          {badge && <div className={`mt-1 text-[11px] font-semibold ${badge.cls}`}>{badge.text}</div>}
+          {!hasPred && locked && (
             <div className="mt-3 text-[11px] text-muted">Tu n&apos;as pas pronostiqué ce match.</div>
           )}
 
@@ -255,12 +255,10 @@ function Row({
   name,
   code,
   score,
-  pred,
 }: {
   name: string;
   code: string | null;
   score: number | null;
-  pred?: number | null;
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
@@ -269,7 +267,7 @@ function Row({
         <span className="font-semibold text-[15px] truncate">{name}</span>
       </div>
       <span className="tabular-nums text-lg font-bold w-7 text-right shrink-0">
-        {score != null ? score : pred != null ? <span className="text-muted text-sm">{pred}</span> : "–"}
+        {score != null ? score : "–"}
       </span>
     </div>
   );

@@ -63,63 +63,115 @@ export async function GET(request: Request) {
   }
   const data = await res.json();
 
-  // --- 2) Index par paire d'équipes (phase de poules) : état + score ---
-  const apiByPair = new Map<
-    string,
-    { home: string; away: string; finished: boolean; hs: number | null; as: number | null }
-  >();
+  // Étape (status) d'un match côté API : terminé / en cours / à venir.
+  type St = "finished" | "live" | "scheduled";
+  function apiState(m: { status?: string }, hs: number | null, as: number | null): St {
+    if (m.status === "FINISHED" && hs != null && as != null) return "finished";
+    if ((m.status === "IN_PLAY" || m.status === "PAUSED") && hs != null && as != null) return "live";
+    return "scheduled";
+  }
+
+  // Phase finale : stage API -> notre code.
+  const STAGE_MAP: Record<string, string> = {
+    LAST_32: "r32",
+    LAST_16: "r16",
+    QUARTER_FINALS: "qf",
+    SEMI_FINALS: "sf",
+    FINAL: "final",
+  };
+
+  // --- 2) Index poules (par paire) + matchs de phase finale (équipes connues) ---
+  const apiByPair = new Map<string, { home: string; away: string; st: St; hs: number | null; as: number | null }>();
+  type Ko = { matchNo: number; stage: string; home: string; away: string; st: St; hs: number | null; as: number | null; kickoff: string; venue: string | null };
+  const knockout: Ko[] = [];
+
   for (const m of data.matches ?? []) {
-    if (m.stage !== "GROUP_STAGE") continue;
     const home = TLA_FR[m.homeTeam?.tla];
     const away = TLA_FR[m.awayTeam?.tla];
-    if (!home || !away) continue;
-    const hs = m.score?.fullTime?.home;
-    const as = m.score?.fullTime?.away;
-    const isFinished = m.status === "FINISHED" && hs != null && as != null;
-    apiByPair.set(pairKey(home, away), { home, away, finished: isFinished, hs, as });
+    const hs = m.score?.fullTime?.home ?? null;
+    const as = m.score?.fullTime?.away ?? null;
+    if (m.stage === "GROUP_STAGE") {
+      if (!home || !away) continue;
+      apiByPair.set(pairKey(home, away), { home, away, st: apiState(m, hs, as), hs, as });
+    } else if (STAGE_MAP[m.stage] && home && away) {
+      // matchs à élimination directe avec les DEUX équipes déterminées
+      knockout.push({ matchNo: m.id, stage: STAGE_MAP[m.stage], home, away, st: apiState(m, hs, as), hs, as, kickoff: m.utcDate, venue: m.venue ?? null });
+    }
   }
 
   // --- 3) Nos matchs de poule (tous pools confondus) ---
   const admin = createClient(supaUrl, serviceKey, { auth: { persistSession: false } });
   const { data: rows, error } = await admin
     .from("matches")
-    .select("id, team_a, team_b, score_a, score_b, status")
+    .select("id, pool_id, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status")
     .eq("stage", "group");
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // --- 4) Réconciliation : l'API fait foi (remplit OU réinitialise) ---
-  let filled = 0;
-  let reset = 0;
+  // Code drapeau par équipe (réutilisé pour la phase finale) + liste des pools.
+  const nameToCode = new Map<string, string | null>();
+  const poolSet = new Set<string>();
+  for (const r of rows ?? []) {
+    poolSet.add(r.pool_id);
+    if (!nameToCode.has(r.team_a)) nameToCode.set(r.team_a, r.team_a_code);
+    if (!nameToCode.has(r.team_b)) nameToCode.set(r.team_b, r.team_b_code);
+  }
+  const poolIds = [...poolSet];
+
+  // --- 4) Réconciliation des poules : l'API fait foi (terminé / en cours / à venir) ---
+  let updated = 0;
   for (const r of rows ?? []) {
     const result = apiByPair.get(pairKey(r.team_a, r.team_b));
     if (!result) continue;
+    let scoreA: number | null = null;
+    let scoreB: number | null = null;
+    let status = "scheduled";
+    if (result.st === "finished" || result.st === "live") {
+      scoreA = r.team_a === result.home ? result.hs : result.as;
+      scoreB = r.team_a === result.home ? result.as : result.hs;
+      status = result.st;
+    }
+    if (r.status === status && r.score_a === scoreA && r.score_b === scoreB) continue;
+    const { error: upErr } = await admin
+      .from("matches")
+      .update({ score_a: scoreA, score_b: scoreB, status })
+      .eq("id", r.id);
+    if (!upErr) updated++;
+  }
 
-    if (result.finished) {
-      const scoreA = r.team_a === result.home ? result.hs : result.as;
-      const scoreB = r.team_a === result.home ? result.as : result.hs;
-      if (r.status === "finished" && r.score_a === scoreA && r.score_b === scoreB) continue; // déjà à jour
-      const { error: upErr } = await admin
-        .from("matches")
-        .update({ score_a: scoreA, score_b: scoreB, status: "finished" })
-        .eq("id", r.id);
-      if (!upErr) filled++;
-    } else if (r.status === "finished" || r.score_a !== null || r.score_b !== null) {
-      // L'API dit que le match n'est pas (encore) joué → on annule un résultat erroné.
-      const { error: upErr } = await admin
-        .from("matches")
-        .update({ score_a: null, score_b: null, status: "scheduled" })
-        .eq("id", r.id);
-      if (!upErr) reset++;
+  // --- 5) Import auto de la phase finale (dès que les équipes sont connues) ---
+  let koWritten = 0;
+  for (const ko of knockout) {
+    const finishedOrLive = ko.st === "finished" || ko.st === "live";
+    for (const poolId of poolIds) {
+      const { error: koErr } = await admin.from("matches").upsert(
+        {
+          pool_id: poolId,
+          match_no: ko.matchNo,
+          stage: ko.stage,
+          group_label: null,
+          kickoff: ko.kickoff,
+          venue: ko.venue,
+          team_a: ko.home,
+          team_a_code: nameToCode.get(ko.home) ?? null,
+          team_b: ko.away,
+          team_b_code: nameToCode.get(ko.away) ?? null,
+          score_a: finishedOrLive ? ko.hs : null,
+          score_b: finishedOrLive ? ko.as : null,
+          status: ko.st,
+        },
+        { onConflict: "pool_id,match_no" }
+      );
+      if (!koErr) koWritten++;
     }
   }
 
   return NextResponse.json({
     ok: true,
-    resultatsApiFinis: [...apiByPair.values()].filter((v) => v.finished).length,
-    nosMatchsPoule: rows?.length ?? 0,
-    scoresRemplis: filled,
-    matchsReinitialises: reset,
+    pools: poolIds.length,
+    poulesMisesAJour: updated,
+    phaseFinaleDispo: knockout.length,
+    phaseFinaleEcrite: koWritten,
   });
 }

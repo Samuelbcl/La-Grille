@@ -6,7 +6,7 @@ name: Synchro des scores
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # toutes les 30 minutes (UTC)
+    - cron: "*/10 * * * *" # toutes les ~10 minutes (UTC) — GitHub peut décaler un peu
   workflow_dispatch: {} # bouton "Run workflow" pour tester à la main
 
 jobs:

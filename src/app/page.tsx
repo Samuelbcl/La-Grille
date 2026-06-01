@@ -67,6 +67,17 @@ export default async function CalendrierPage() {
             </div>
           </section>
         ))}
+
+        {matches.length > 0 && !matches.some((m) => m.stage !== "group") && (
+          <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-5 text-center">
+            <div className="mb-1 text-3xl">🏆</div>
+            <p className="font-semibold">Phase finale — bientôt</p>
+            <p className="mt-0.5 text-[13px] text-muted">
+              16es de finale → finale. Les affiches apparaîtront ici <b>automatiquement</b> dès la fin
+              des poules.
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
