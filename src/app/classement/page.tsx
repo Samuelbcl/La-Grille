@@ -11,7 +11,7 @@ const MEDALS = ["🥇", "🥈", "🥉"];
 export default async function ClassementPage() {
   const pool = await getCurrentPool();
   if (!pool) {
-    return <div className="px-6 pt-24 text-center text-muted">Rejoins un pool pour voir le classement.</div>;
+    return <div className="px-6 pt-24 text-center text-muted">Rejoins un groupe pour voir le classement.</div>;
   }
 
   const supabase = await createClient();

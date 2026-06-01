@@ -73,7 +73,7 @@ export default async function ProfilPage() {
           <div className="min-w-0">
             <p className="text-xl font-bold truncate">{name}</p>
             <p className="text-sm text-muted truncate">
-              {pool ? pool.name : user?.email ?? ""}
+              {pool ? pool.name : "Pas encore de groupe"}
             </p>
           </div>
         </div>
@@ -93,7 +93,7 @@ export default async function ProfilPage() {
           </>
         ) : (
           <p className="text-center text-muted pt-6">
-            Rejoins un pool depuis l'onglet <b>Gérer</b> pour voir tes stats.
+            Rejoins un groupe depuis l'onglet <b>Gérer</b> pour voir tes stats.
           </p>
         )}
 
@@ -109,7 +109,7 @@ export default async function ProfilPage() {
             <ChevronRight size={18} className="text-muted" />
           </Link>
           <Link href="/admin" className="flex items-center justify-between px-4 py-3.5 active:bg-surface-2 transition">
-            <span className="font-medium">Gérer mon pool</span>
+            <span className="font-medium">Gérer mon groupe</span>
             <ChevronRight size={18} className="text-muted" />
           </Link>
         </div>

@@ -4,37 +4,34 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/Avatar";
 import { X } from "lucide-react";
 
 type Acc = { email: string; name: string };
 const LS_KEY = "lagrille:accounts";
 
-function traduire(msg: string): string {
-  const m = msg.toLowerCase();
-  if (m.includes("at least") && m.includes("character")) return "Mot de passe : au moins 6 caractères.";
-  if (m.includes("unable to validate email") || m.includes("invalid email")) return "E-mail invalide.";
-  if (m.includes("already registered")) return "Cet e-mail a déjà un compte — connecte-toi.";
-  return msg;
+/** E-mail interne déterministe à partir du prénom + nom (jamais affiché). */
+function slug(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
-
-/** Couleur d'avatar stable à partir du nom. */
-function avatarColor(s: string): string {
-  let h = 0;
-  for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return `hsl(${h % 360} 60% 45%)`;
+function emailFrom(prenom: string, nom: string): string {
+  return `${slug(prenom)}.${slug(nom)}@lagrille.app`;
 }
 
 export default function LoginPage() {
   const [accounts, setAccounts] = useState<Acc[]>([]);
   const [view, setView] = useState<"picker" | "login" | "signup">("login");
-  const [emailLocked, setEmailLocked] = useState(false);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [locked, setLocked] = useState<Acc | null>(null); // profil tapé (email connu)
+  const [prenom, setPrenom] = useState("");
+  const [nom, setNom] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Comptes mémorisés sur cet appareil.
   useEffect(() => {
     let list: Acc[] = [];
     try {
@@ -50,12 +47,12 @@ export default function LoginPage() {
         (a) => a.email !== acc.email
       );
       list.unshift(acc);
-      localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 6)));
+      localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 8)));
     } catch {}
   }
 
-  function forget(emailToRemove: string) {
-    const list = accounts.filter((a) => a.email !== emailToRemove);
+  function forget(email: string) {
+    const list = accounts.filter((a) => a.email !== email);
     setAccounts(list);
     try {
       localStorage.setItem(LS_KEY, JSON.stringify(list));
@@ -64,18 +61,16 @@ export default function LoginPage() {
   }
 
   function pickProfile(acc: Acc) {
-    setEmail(acc.email);
-    setName(acc.name);
-    setEmailLocked(true);
+    setLocked(acc);
     setPassword("");
     setError(null);
     setView("login");
   }
 
   function otherAccount() {
-    setEmail("");
-    setName("");
-    setEmailLocked(false);
+    setLocked(null);
+    setPrenom("");
+    setNom("");
     setPassword("");
     setError(null);
     setView("login");
@@ -88,48 +83,43 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (view === "signup") {
+      const email = emailFrom(prenom, nom);
+      const displayName = `${prenom.trim()} ${nom.trim()}`.trim();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { display_name: name.trim() || email.split("@")[0] } },
+        options: { data: { display_name: displayName } },
       });
       if (error) {
         setLoading(false);
-        return setError(traduire(error.message));
+        if (error.message.toLowerCase().includes("already registered"))
+          return setError("Ce prénom + nom a déjà un compte — connecte-toi.");
+        if (error.message.toLowerCase().includes("at least"))
+          return setError("Mot de passe : au moins 6 caractères.");
+        return setError(error.message);
       }
       if (!data.session) {
         setLoading(false);
-        return setError("Cet e-mail a déjà un compte — connecte-toi.");
+        return setError("Ce prénom + nom a déjà un compte — connecte-toi.");
       }
-      remember({ email, name: name.trim() || email.split("@")[0] });
+      remember({ email, name: displayName });
       window.location.assign("/");
       return;
     }
 
     // Connexion
+    const email = locked ? locked.email : emailFrom(prenom, nom);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
       return setError("Mot de passe incorrect (ou compte inexistant).");
     }
-    // Récupère le prénom pour la carte de profil
-    let displayName = name;
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", user.id)
-          .maybeSingle();
-        displayName = prof?.display_name || name || email.split("@")[0];
-      }
-    } catch {}
-    remember({ email, name: displayName });
+    remember({ email, name: locked ? locked.name : `${prenom.trim()} ${nom.trim()}`.trim() });
     window.location.assign("/");
   }
+
+  const canSubmit =
+    password.length >= 6 && (view === "picker" ? false : locked ? true : prenom.trim() && nom.trim());
 
   return (
     <div className="flex min-h-dvh flex-col justify-center px-6 -mt-8">
@@ -157,24 +147,14 @@ export default function LoginPage() {
                 onClick={() => pickProfile(acc)}
                 className="flex w-full items-center gap-3 rounded-2xl border border-border bg-surface px-3 py-3 shadow-card active:scale-[0.99] transition"
               >
-                <span
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg font-bold text-white"
-                  style={{ backgroundColor: avatarColor(acc.name || acc.email) }}
-                >
-                  {(acc.name || acc.email).charAt(0).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="block font-semibold truncate">{acc.name}</span>
-                  <span className="block text-xs text-muted truncate">{acc.email}</span>
-                </span>
+                <Avatar url={null} name={acc.name} size={44} />
+                <span className="min-w-0 flex-1 text-left font-semibold truncate">{acc.name}</span>
                 <span
                   role="button"
                   aria-label="Oublier ce profil"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm(`Oublier le profil de ${acc.name || acc.email} ? Tu devras retaper l'e-mail pour revenir.`)) {
-                      forget(acc.email);
-                    }
+                    if (confirm(`Oublier le profil de ${acc.name} ?`)) forget(acc.email);
                   }}
                   className="grid h-7 w-7 place-items-center rounded-full text-muted hover:bg-surface-2"
                 >
@@ -183,9 +163,8 @@ export default function LoginPage() {
               </button>
             ))}
           </div>
-
           <button onClick={otherAccount} className="w-full text-center text-sm text-accent font-medium pt-2">
-            Utiliser un autre compte
+            Se connecter avec un autre compte
           </button>
           <button
             onClick={() => {
@@ -202,49 +181,40 @@ export default function LoginPage() {
       {/* --- Connexion --- */}
       {view === "login" && (
         <form onSubmit={submit} className="space-y-3 animate-fade-up">
-          {emailLocked ? (
+          {locked ? (
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-surface-2 px-3 py-3">
-              <span
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-base font-bold text-white"
-                style={{ backgroundColor: avatarColor(name || email) }}
-              >
-                {(name || email).charAt(0).toUpperCase()}
-              </span>
-              <span className="min-w-0">
-                <span className="block font-semibold truncate">{name || "Connexion"}</span>
-                <span className="block text-xs text-muted truncate">{email}</span>
-              </span>
+              <Avatar url={null} name={locked.name} size={40} />
+              <span className="min-w-0 font-semibold truncate">{locked.name}</span>
             </div>
           ) : (
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              placeholder="ton@email.com"
-              className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-            />
+            <div className="flex gap-2">
+              <input
+                value={prenom}
+                onChange={(e) => setPrenom(e.target.value)}
+                placeholder="Prénom"
+                className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
+              />
+              <input
+                value={nom}
+                onChange={(e) => setNom(e.target.value)}
+                placeholder="Nom"
+                className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
+              />
+            </div>
           )}
-          {/* champ email caché pour les gestionnaires de mots de passe quand il est verrouillé */}
-          {emailLocked && <input type="email" value={email} autoComplete="email" readOnly hidden />}
-
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             type="password"
             autoComplete="current-password"
             placeholder="Mot de passe"
-            autoFocus={emailLocked}
+            autoFocus={!!locked}
             className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
           />
-
           {error && <p className="text-sm text-[#ff3b30] px-1">{error}</p>}
-
-          <Button type="submit" size="lg" disabled={!email || password.length < 6 || loading}>
+          <Button type="submit" size="lg" disabled={!canSubmit || loading}>
             {loading ? "..." : "Se connecter"}
           </Button>
-
           <div className="flex items-center justify-between pt-1 text-sm">
             {accounts.length > 0 ? (
               <button type="button" onClick={() => setView("picker")} className="text-accent font-medium">
@@ -263,21 +233,20 @@ export default function LoginPage() {
       {/* --- Création de compte --- */}
       {view === "signup" && (
         <form onSubmit={submit} className="space-y-3 animate-fade-up">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ton prénom"
-            className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-          />
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="ton@email.com"
-            className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-          />
+          <div className="flex gap-2">
+            <input
+              value={prenom}
+              onChange={(e) => setPrenom(e.target.value)}
+              placeholder="Prénom"
+              className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
+            />
+            <input
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              placeholder="Nom"
+              className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
+            />
+          </div>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -286,13 +255,10 @@ export default function LoginPage() {
             placeholder="Mot de passe (6 caractères min.)"
             className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
           />
-
           {error && <p className="text-sm text-[#ff3b30] px-1">{error}</p>}
-
-          <Button type="submit" size="lg" disabled={!email || password.length < 6 || loading}>
+          <Button type="submit" size="lg" disabled={!canSubmit || loading}>
             {loading ? "..." : "Créer mon compte"}
           </Button>
-
           <button
             type="button"
             onClick={() => setView(accounts.length ? "picker" : "login")}
@@ -304,8 +270,8 @@ export default function LoginPage() {
       )}
 
       <p className="text-center text-xs text-muted px-4 pt-5">
-        Tes profils restent sur ton téléphone : si tu te déconnectes, tu n'as qu'à
-        cliquer sur le tien pour revenir.
+        Pas d&apos;e-mail : juste prénom, nom et mot de passe. Tu restes connecté,
+        et tu peux revenir d&apos;un tap sur ton profil.
       </p>
     </div>
   );

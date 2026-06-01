@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Users } from "lucide-react";
 import { formatKickoff, matchState } from "@/lib/utils";
-import { computePoints, outcomeOf, stageBareme } from "@/lib/scoring";
+import { computePoints, outcomeOf, POINTS } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
@@ -27,7 +27,15 @@ export interface MatchCardData {
   pred_b?: number | null;
 }
 
-export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | null }) {
+export function MatchCard({
+  m,
+  userId,
+  editable = false,
+}: {
+  m: MatchCardData;
+  userId: string | null;
+  editable?: boolean;
+}) {
   const router = useRouter();
   const locked = new Date(m.kickoff) <= new Date();
   const finished = m.status === "finished";
@@ -73,7 +81,7 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
         name: row.profiles?.display_name ?? "Joueur",
         a: row.pred_a,
         b: row.pred_b,
-        pts: finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b, m.stage) : 0,
+        pts: finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b) : 0,
         isMine: row.user_id === userId,
       };
     });
@@ -135,17 +143,14 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
 
   const outcome =
     finished && hasPred ? outcomeOf(predA!, predB!, m.score_a, m.score_b) : "pending";
-  const bareme = stageBareme(m.stage);
   const badge =
     outcome === "exact"
-      ? { text: `Score exact +${bareme.exact}`, cls: "text-success" }
+      ? { text: `Score exact +${POINTS.exact}`, cls: "text-success" }
       : outcome === "correct"
-        ? { text: `Bon vainqueur +${bareme.outcome}`, cls: "text-accent" }
-        : outcome === "partial"
-          ? { text: "Un score bon +1", cls: "text-accent" }
-          : outcome === "wrong"
-            ? { text: "Raté", cls: "text-muted" }
-            : null;
+        ? { text: `Bon vainqueur +${POINTS.outcome}`, cls: "text-accent" }
+        : outcome === "wrong"
+          ? { text: "Raté", cls: "text-muted" }
+          : null;
 
   return (
     <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
@@ -155,7 +160,7 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
           {m.group_label ? `Groupe ${m.group_label} · ` : ""}
           {formatKickoff(m.kickoff)}
         </span>
-        {state === "upcoming" && (
+        {editable && state === "upcoming" && (
           <button
             onClick={() => (editing ? setEditing(false) : openEdit())}
             className="shrink-0 font-medium text-accent"

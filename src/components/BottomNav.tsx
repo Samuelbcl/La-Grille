@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Settings2, User, CalendarDays, Clock } from "lucide-react";
+import { Trophy, Settings2, User, CalendarDays, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
-  { href: "/aujourdhui", label: "Aujourd'hui", icon: Clock },
+  { href: "/pronos", label: "Pronos", icon: ClipboardCheck },
   { href: "/", label: "Calendrier", icon: CalendarDays },
   { href: "/classement", label: "Classement", icon: Trophy },
   { href: "/admin", label: "Gérer", icon: Settings2 },

@@ -81,15 +81,11 @@ create table if not exists public.predictions (
 -- =====================================================================
 --  CALCUL DES POINTS — barème « La Grille » (cf. docs/REGLEMENT.md)
 -- =====================================================================
--- Le barème dépend de la PHASE du match (score exact / bon vainqueur) :
---   groupes         5 / 2     (stage = 'group')
---   16es de finale  6 / 3     (stage = 'r32')
---   8es de finale   8 / 4     (stage = 'r16')
---   quarts         12 / 6     (stage = 'qf')
---   demi-finales   18 / 9     (stage = 'sf')
---   finale         30 / 15    (stage = 'final')
--- Bonus : +1 si UN SEUL des deux scores d'équipe est correct.
--- On garde le meilleur cas : exact > bon vainqueur > +1 > 0.
+-- Barème identique à toutes les phases, CUMULATIF :
+--   • Bon vainqueur (1/N/2)         : +2
+--   • Score exact (en plus)         : +5   → un score exact rapporte donc 7
+--   • Mauvais vainqueur / pas de prono : 0
+-- (Le paramètre p_stage n'est plus utilisé, conservé pour compatibilité.)
 
 -- Re-run propre : on retire d'abord les vues qui dépendent de la fonction.
 drop view if exists public.v_leaderboard;
@@ -104,13 +100,8 @@ create or replace function public.compute_points(
 language sql immutable as $$
   select case
     when real_a is null or real_b is null then 0
-    when pred_a = real_a and pred_b = real_b then
-      case p_stage when 'r32' then 6 when 'r16' then 8 when 'qf' then 12
-                   when 'sf' then 18 when 'final' then 30 else 5 end
-    when sign(pred_a - pred_b) = sign(real_a - real_b) then
-      case p_stage when 'r32' then 3 when 'r16' then 4 when 'qf' then 6
-                   when 'sf' then 9 when 'final' then 15 else 2 end
-    when pred_a = real_a or pred_b = real_b then 1
+    when pred_a = real_a and pred_b = real_b then 7   -- bon vainqueur (2) + score exact (5)
+    when sign(pred_a - pred_b) = sign(real_a - real_b) then 2
     else 0
   end;
 $$;

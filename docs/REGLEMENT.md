@@ -9,32 +9,25 @@
 Chaque participant verse une **mise identique**. Le participant ayant le **plus de
 points** à la fin de la compétition remporte **l'intégralité de la cagnotte**.
 
-## Barème des points
+## Barème des points (identique à toutes les phases, cumulatif)
 
-| Phase | Score exact | Bon vainqueur |
-|---|---|---|
-| Phase de groupes | 5 pts | 2 pts |
-| 16es de finale | 6 pts | 3 pts |
-| 8es de finale | 8 pts | 4 pts |
-| Quarts de finale | 12 pts | 6 pts |
-| Demi-finales | 18 pts | 9 pts |
-| Finale | 30 pts | 15 pts |
+| Pronostic | Points |
+|---|---|
+| **Bon vainqueur** (victoire / nul / défaite) | **+2** |
+| **Score exact** (en plus du bon vainqueur) | **+5** |
+| → un **score exact** rapporte donc | **7 pts** |
+| Mauvais vainqueur, ou oubli de parier | **0** |
 
-- **Score exact** : le score pronostiqué correspond exactement au résultat réel.
-- **Bon vainqueur** : le bon résultat (victoire / nul / défaite) mais avec un score faux.
+- **Bon vainqueur** : le bon résultat (1 / N / 2), même avec un score faux → **2 pts**.
+- **Score exact** : le score pronostiqué correspond exactement → **5 pts en plus**, soit **7 pts** au total.
+- **Mauvais vainqueur ET mauvais score** : **0 point**.
+- **Pas de pronostic** (oubli) : **0 point**.
 
 ## Règles complémentaires
 
-- 🎁 **Bonus +1** : si *un seul* des deux scores d'équipe est correct.
-  Le calcul retient toujours le **meilleur cas** : score exact > bon vainqueur >
-  +1 (un score correct) > 0. Le bonus ne s'applique donc que lorsqu'on a manqué
-  le bon vainqueur mais deviné juste l'un des deux scores.
-- ❌ **Match annulé / mauvaises équipes** : si le match pronostiqué n'a finalement
-  pas lieu (mauvaises équipes qualifiées en phase finale), **aucun point** n'est attribué.
 - ⏰ **Date limite** : tout pronostic doit être envoyé **avant le coup d'envoi** du
-  match pour être pris en compte (verrouillage automatique dans l'app).
-- 🤝 **Égalité finale** : en cas d'égalité au classement final, la cagnotte est
-  **partagée** entre les participants concernés.
+  match (verrouillage automatique dans l'app).
+- 🤝 **Égalité finale** : en cas d'égalité au classement final, ex æquo.
 
 ## Correspondance technique (phases)
 

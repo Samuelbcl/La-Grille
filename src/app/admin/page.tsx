@@ -101,7 +101,7 @@ export default function AdminPage() {
 
   async function deletePool() {
     if (!pool) return;
-    if (!confirm(`Supprimer le pool « ${pool.name} » ? Tous les matchs, pronos et le classement seront perdus.`))
+    if (!confirm(`Supprimer le groupe « ${pool.name} » ? Tous les matchs, pronos et le classement seront perdus.`))
       return;
     if (!confirm("Confirmer : cette suppression est définitive.")) return;
     const { error } = await supabase.from("pools").delete().eq("id", pool.id);
@@ -133,12 +133,12 @@ export default function AdminPage() {
   if (!pool) {
     return (
       <div className="px-5 pt-[calc(env(safe-area-inset-top)+18px)] space-y-6">
-        <h1 className="text-2xl font-bold">Mon pool</h1>
+        <h1 className="text-2xl font-bold">Mon groupe</h1>
         {msg && <p className={`text-sm ${msgClass}`}>{msg}</p>}
 
         <Card className="p-5 space-y-3">
-          <h2 className="font-semibold">Créer un pool</h2>
-          <p className="text-sm text-muted">Tu deviens l&apos;organisateur du pool.</p>
+          <h2 className="font-semibold">Créer un groupe</h2>
+          <p className="text-sm text-muted">Tu deviens l&apos;organisateur du groupe.</p>
           <input
             value={poolName}
             onChange={(e) => setPoolName(e.target.value)}
@@ -151,7 +151,7 @@ export default function AdminPage() {
         </Card>
 
         <Card className="p-5 space-y-3">
-          <h2 className="font-semibold">Rejoindre un pool</h2>
+          <h2 className="font-semibold">Rejoindre un groupe</h2>
           <p className="text-sm text-muted">Avec le code à 6 caractères de l&apos;organisateur.</p>
           <input
             value={code}
@@ -179,27 +179,27 @@ export default function AdminPage() {
       </div>
       {msg && <p className={`text-sm ${msgClass}`}>{msg}</p>}
 
-      {/* Code d'invitation */}
-      <Card className="p-5">
-        <p className="text-sm text-muted mb-1">Code d&apos;invitation</p>
-        <div className="flex items-center justify-between">
-          <span className="text-3xl font-mono font-bold tracking-widest">{pool.join_code}</span>
-          <button
-            onClick={() => {
-              navigator.clipboard.writeText(pool.join_code);
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }}
-            className="flex items-center gap-1 text-accent font-medium"
-          >
-            {copied ? <Check size={18} /> : <Copy size={18} />} {copied ? "Copié" : "Copier"}
-          </button>
-        </div>
-        <p className="text-xs text-muted mt-2">Partage ce code à tes potes pour qu&apos;ils rejoignent.</p>
-      </Card>
-
-      {pool.is_admin && (
+      {pool.is_admin ? (
         <>
+          {/* Code d'invitation (admin uniquement) */}
+          <Card className="p-5">
+            <p className="text-sm text-muted mb-1">Code d&apos;invitation</p>
+            <div className="flex items-center justify-between">
+              <span className="text-3xl font-mono font-bold tracking-widest">{pool.join_code}</span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(pool.join_code);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                className="flex items-center gap-1 text-accent font-medium"
+              >
+                {copied ? <Check size={18} /> : <Copy size={18} />} {copied ? "Copié" : "Copier"}
+              </button>
+            </div>
+            <p className="text-xs text-muted mt-2">Partage ce code à tes potes pour qu&apos;ils rejoignent.</p>
+          </Card>
+
           {/* Import des matchs */}
           {matchCount === 0 ? (
             <Card className="p-5 space-y-3">
@@ -229,17 +229,28 @@ export default function AdminPage() {
             </Card>
           )}
 
-          {/* Zone de danger : supprimer le pool */}
+          {/* Zone de danger : supprimer le groupe */}
           <Card className="p-5 space-y-3">
             <h2 className="font-semibold text-[#ff3b30]">Zone de danger</h2>
             <p className="text-sm text-muted">
-              Supprime définitivement ce pool (matchs, pronos et classement). Pour repartir de zéro.
+              Supprime définitivement ce groupe (matchs, pronos et classement). Pour repartir de zéro.
             </p>
             <Button variant="danger" onClick={deletePool} className="w-full">
-              Supprimer ce pool
+              Supprimer ce groupe
             </Button>
           </Card>
         </>
+      ) : (
+        <Card className="p-5 space-y-2">
+          <h2 className="font-semibold">Ton groupe</h2>
+          <p className="text-sm text-muted">
+            Tu participes à <b>{pool.name}</b>. C&apos;est l&apos;organisateur qui gère le groupe
+            (matchs, résultats…).
+          </p>
+          <p className="text-sm text-muted">
+            Pour partir, utilise <b>Déconnexion</b> (en haut à droite, ou dans l&apos;onglet Profil).
+          </p>
+        </Card>
       )}
     </div>
   );

@@ -21,37 +21,23 @@ export default function ReglesPage() {
         </div>
         <div className="h-px bg-border" />
         <div>
-          <p className="font-semibold">🧮 Le barème (par phase)</p>
-          <div className="mt-2 overflow-hidden rounded-xl border border-border">
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="bg-surface-2 text-muted">
-                  <th className="text-left font-medium px-3 py-2">Phase</th>
-                  <th className="text-right font-medium px-2 py-2 text-success">Exact</th>
-                  <th className="text-right font-medium px-3 py-2 text-accent">Bon vainqueur</th>
-                </tr>
-              </thead>
-              <tbody className="tabular-nums">
-                {[
-                  ["Phase de groupes", 5, 2],
-                  ["16es de finale", 6, 3],
-                  ["8es de finale", 8, 4],
-                  ["Quarts de finale", 12, 6],
-                  ["Demi-finales", 18, 9],
-                  ["Finale", 30, 15],
-                ].map(([phase, exact, bon]) => (
-                  <tr key={phase as string} className="border-t border-border">
-                    <td className="px-3 py-1.5">{phase}</td>
-                    <td className="px-2 py-1.5 text-right font-semibold text-success">{exact}</td>
-                    <td className="px-3 py-1.5 text-right font-semibold text-accent">{bon}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <p className="font-semibold">🧮 Le barème</p>
+          <ul className="text-muted space-y-1.5 mt-2">
+            <li>
+              <b className="text-accent">Bon vainqueur</b> (victoire / nul / défaite) :{" "}
+              <b className="text-text">+2</b>
+            </li>
+            <li>
+              <b className="text-success">Score exact</b> : <b className="text-text">+5 en plus</b> →{" "}
+              <b className="text-text">7 points</b> au total 🎯
+            </li>
+            <li>
+              <b>Mauvais vainqueur</b>, ou <b>oubli de parier</b> : <b className="text-text">0</b>
+            </li>
+          </ul>
           <p className="text-muted text-[13px] mt-2">
-            🎁 <b>+1 bonus</b> si un seul des deux scores est correct. On garde le
-            meilleur cas : exact &gt; bon vainqueur &gt; +1 &gt; 0.
+            Les points sont les mêmes à toutes les phases. Un score exact cumule le bon vainqueur
+            (2) et l&apos;exact (5).
           </p>
         </div>
         <div className="h-px bg-border" />
@@ -66,8 +52,8 @@ export default function ReglesPage() {
         <div>
           <p className="font-semibold">🏆 Le classement</p>
           <p className="text-muted">
-            Il se met à jour <b>automatiquement</b> dès que l'organisateur saisit un
-            résultat. Plus besoin de tout recompter à la main.
+            Il se met à jour <b>automatiquement</b> dès qu'un match est terminé (résultats
+            officiels). Plus besoin de tout recompter à la main.
           </p>
         </div>
       </Card>
