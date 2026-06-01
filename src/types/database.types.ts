@@ -181,7 +181,9 @@ export interface Database {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      join_pool: { Args: { p_code: string }; Returns: string };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
