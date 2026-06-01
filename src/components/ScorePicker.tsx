@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { flag } from "@/lib/utils";
+import { Flag } from "@/components/Flag";
 
 function Stepper({
   value,
@@ -82,7 +82,7 @@ function Side({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex flex-col items-center gap-1.5">
-        <span className="text-4xl leading-none">{flag(code)}</span>
+        <Flag code={code} size={34} />
         <span className="text-sm font-semibold text-center leading-tight">{name}</span>
       </div>
       {children}

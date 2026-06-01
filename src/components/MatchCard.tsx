@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Minus, Plus } from "lucide-react";
-import { flag, formatKickoff, matchState } from "@/lib/utils";
-import { outcomeOf, stageBareme } from "@/lib/scoring";
+import { Minus, Plus, Users } from "lucide-react";
+import { formatKickoff, matchState } from "@/lib/utils";
+import { computePoints, outcomeOf, stageBareme } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Flag } from "@/components/Flag";
+
+type PeerPred = { name: string; a: number; b: number; pts: number; isMine: boolean };
 
 export interface MatchCardData {
   id: string;
@@ -41,6 +44,43 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
   const [b, setB] = useState(predB ?? 0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Pronos des potes (visibles après le coup d'envoi — RLS anti-triche).
+  const [showPeers, setShowPeers] = useState(false);
+  const [peers, setPeers] = useState<PeerPred[] | null>(null);
+  const [loadingPeers, setLoadingPeers] = useState(false);
+
+  async function togglePeers() {
+    if (peers) {
+      setShowPeers((s) => !s);
+      return;
+    }
+    setShowPeers(true);
+    setLoadingPeers(true);
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("predictions")
+      .select("user_id, pred_a, pred_b, profiles(display_name)")
+      .eq("match_id", m.id);
+    const list: PeerPred[] = (data ?? []).map((p) => {
+      const row = p as unknown as {
+        user_id: string;
+        pred_a: number;
+        pred_b: number;
+        profiles: { display_name: string } | null;
+      };
+      return {
+        name: row.profiles?.display_name ?? "Joueur",
+        a: row.pred_a,
+        b: row.pred_b,
+        pts: finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b, m.stage) : 0,
+        isMine: row.user_id === userId,
+      };
+    });
+    list.sort((x, y) => y.pts - x.pts);
+    setPeers(list);
+    setLoadingPeers(false);
+  }
 
   // 🎉 Confettis (une seule fois par match) quand TON prono est un score exact.
   useEffect(() => {
@@ -155,6 +195,45 @@ export function MatchCard({ m, userId }: { m: MatchCardData; userId: string | nu
           {!finished && !hasPred && locked && (
             <div className="mt-3 text-[11px] text-muted">Pas de prono (match commencé)</div>
           )}
+
+          {/* Pronos des potes — visibles seulement après le coup d'envoi */}
+          {locked && (
+            <div className="mt-3 border-t border-border pt-3">
+              <button
+                onClick={togglePeers}
+                className="flex items-center gap-1.5 text-[12px] font-medium text-accent"
+              >
+                <Users size={14} /> {showPeers ? "Masquer les pronos" : "Voir les pronos des potes"}
+              </button>
+              {showPeers && (
+                <div className="mt-2 space-y-1.5">
+                  {loadingPeers && <p className="text-[12px] text-muted">Chargement…</p>}
+                  {!loadingPeers && peers && peers.length === 0 && (
+                    <p className="text-[12px] text-muted">Aucun prono sur ce match.</p>
+                  )}
+                  {!loadingPeers &&
+                    peers?.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 text-[13px]">
+                        <span className={`min-w-0 truncate ${p.isMine ? "font-semibold text-accent" : ""}`}>
+                          {p.name}
+                          {p.isMine ? " · toi" : ""}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="tabular-nums font-semibold">
+                            {p.a}–{p.b}
+                          </span>
+                          {finished && (
+                            <span className={`tabular-nums text-[11px] ${p.pts > 0 ? "text-success" : "text-muted"}`}>
+                              +{p.pts}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>
@@ -175,7 +254,7 @@ function Row({
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-2xl leading-none">{flag(code)}</span>
+        <Flag code={code} size={22} />
         <span className="font-semibold text-[15px] truncate">{name}</span>
       </div>
       <span className="tabular-nums text-lg font-bold w-7 text-right shrink-0">
@@ -198,7 +277,7 @@ function EditRow({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className="text-2xl leading-none">{flag(code)}</span>
+      <Flag code={code} size={22} />
       <span className="flex-1 min-w-0 truncate font-semibold text-[15px]">{name}</span>
       <div className="flex items-center gap-2 shrink-0">
         <button
