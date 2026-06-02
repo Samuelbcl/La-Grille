@@ -1,9 +1,7 @@
-import { teamBackground, teamByCode } from "@/lib/teams";
-
 /**
- * Avatar en carré arrondi : soit l'image perso (personnage entier, object-contain),
- * soit une pastille colorée avec l'initiale en secours. `size` = côté en px.
- * `team` = code drapeau de l'équipe favorite → colore le fond à ses couleurs.
+ * Avatar en carré arrondi : soit l'image perso (qui remplit le cadre avec son
+ * propre fond, object-cover), soit une pastille colorée avec l'initiale en
+ * secours. `size` = côté en px.
  */
 export function avatarColor(s: string): string {
   let h = 0;
@@ -16,29 +14,26 @@ export function Avatar({
   name,
   size = 40,
   className = "",
-  team,
 }: {
   url?: string | null;
   name: string;
   size?: number;
   className?: string;
-  team?: string | null;
 }) {
   const radius = Math.round(size * 0.28);
 
   if (url) {
     return (
       <span
-        className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}
-        style={{ width: size, height: size, borderRadius: radius, background: teamBackground(team) }}
+        className={`inline-flex shrink-0 items-center justify-center overflow-hidden bg-surface-2 ${className}`}
+        style={{ width: size, height: size, borderRadius: radius }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={url} alt={`Avatar de ${name}`} loading="lazy" className="h-full w-full object-contain" />
+        <img src={url} alt={`Avatar de ${name}`} loading="lazy" className="h-full w-full object-cover" />
       </span>
     );
   }
 
-  const t = teamByCode(team);
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center font-bold text-white ${className}`}
@@ -46,8 +41,7 @@ export function Avatar({
         width: size,
         height: size,
         borderRadius: radius,
-        background: t ? `linear-gradient(145deg, ${t.from} 0%, ${t.to} 100%)` : undefined,
-        backgroundColor: t ? undefined : avatarColor(name),
+        backgroundColor: avatarColor(name),
         fontSize: Math.round(size * 0.42),
       }}
     >

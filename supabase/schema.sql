@@ -12,11 +12,8 @@ create table if not exists public.profiles (
   id           uuid primary key references auth.users (id) on delete cascade,
   display_name text not null default 'Joueur',
   avatar_url   text,
-  fav_team     text,                                   -- code drapeau de l'équipe favorite (couleurs de l'avatar)
   created_at   timestamptz not null default now()
 );
--- Ajout idempotent de la colonne pour les bases déjà créées.
-alter table public.profiles add column if not exists fav_team text;
 
 -- ---------------------------------------------------------------------
 -- 2. POOLS (une "ligue" de pronos — réutilisable chaque année / compétition)
@@ -135,14 +132,13 @@ select
   s.user_id,
   pr.display_name,
   pr.avatar_url,
-  pr.fav_team,
   coalesce(sum(s.points), 0)                            as total_points,
   count(*) filter (where s.is_exact)                    as exact_count,
   count(*) filter (where s.points = 2)                  as correct_count,
   count(*) filter (where s.status = 'finished')         as played_count
 from public.v_prediction_scores s
 join public.profiles pr on pr.id = s.user_id
-group by s.pool_id, s.user_id, pr.display_name, pr.avatar_url, pr.fav_team;
+group by s.pool_id, s.user_id, pr.display_name, pr.avatar_url;
 
 -- =====================================================================
 --  TRIGGERS

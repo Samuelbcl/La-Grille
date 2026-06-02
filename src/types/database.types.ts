@@ -17,9 +17,9 @@ export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: { id: string; display_name: string; avatar_url: string | null; fav_team: string | null; created_at: string };
-        Insert: { id: string; display_name?: string; avatar_url?: string | null; fav_team?: string | null };
-        Update: { display_name?: string; avatar_url?: string | null; fav_team?: string | null };
+        Row: { id: string; display_name: string; avatar_url: string | null; created_at: string };
+        Insert: { id: string; display_name?: string; avatar_url?: string | null };
+        Update: { display_name?: string; avatar_url?: string | null };
         Relationships: [];
       };
       pools: {
@@ -156,7 +156,6 @@ export interface Database {
           user_id: string;
           display_name: string;
           avatar_url: string | null;
-          fav_team: string | null;
           total_points: number;
           exact_count: number;
           correct_count: number;
