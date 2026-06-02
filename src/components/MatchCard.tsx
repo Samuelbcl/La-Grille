@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 
-type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; isMine: boolean };
+type PeerPred = { name: string; avatarUrl: string | null; team: string | null; a: number; b: number; pts: number; isMine: boolean };
 
 export interface MatchCardData {
   id: string;
@@ -69,18 +69,19 @@ export function MatchCard({
     const supabase = createClient();
     const { data } = await supabase
       .from("predictions")
-      .select("user_id, pred_a, pred_b, profiles(display_name, avatar_url)")
+      .select("user_id, pred_a, pred_b, profiles(display_name, avatar_url, fav_team)")
       .eq("match_id", m.id);
     const list: PeerPred[] = (data ?? []).map((p) => {
       const row = p as unknown as {
         user_id: string;
         pred_a: number;
         pred_b: number;
-        profiles: { display_name: string; avatar_url: string | null } | null;
+        profiles: { display_name: string; avatar_url: string | null; fav_team: string | null } | null;
       };
       return {
         name: row.profiles?.display_name ?? "Joueur",
         avatarUrl: row.profiles?.avatar_url ?? null,
+        team: row.profiles?.fav_team ?? null,
         a: row.pred_a,
         b: row.pred_b,
         pts: finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b) : 0,
@@ -223,7 +224,7 @@ export function MatchCard({
                     peers?.map((p, i) => (
                       <div key={i} className="flex items-center justify-between gap-2 text-[13px]">
                         <span className="flex min-w-0 items-center gap-2">
-                          <Avatar url={p.avatarUrl} name={p.name} size={20} />
+                          <Avatar url={p.avatarUrl} name={p.name} team={p.team} size={20} />
                           <span className={`truncate ${p.isMine ? "font-semibold text-accent" : ""}`}>
                             {p.name}
                             {p.isMine ? " · toi" : ""}

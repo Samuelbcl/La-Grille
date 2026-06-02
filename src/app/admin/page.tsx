@@ -16,7 +16,7 @@ type Pool = {
   join_code: string;
   is_admin: boolean;
 };
-type Member = { userId: string; name: string; avatarUrl: string | null; isAdmin: boolean };
+type Member = { userId: string; name: string; avatarUrl: string | null; team: string | null; isAdmin: boolean };
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -62,12 +62,12 @@ export default function AdminPage() {
 
       const { data: mem } = await supabase
         .from("pool_members")
-        .select("user_id, is_admin, profiles(display_name, avatar_url)")
+        .select("user_id, is_admin, profiles(display_name, avatar_url, fav_team)")
         .eq("pool_id", p.id);
       const rows = (mem ?? []) as unknown as Array<{
         user_id: string;
         is_admin: boolean;
-        profiles: { display_name: string; avatar_url: string | null } | null;
+        profiles: { display_name: string; avatar_url: string | null; fav_team: string | null } | null;
       }>;
       setMembers(
         rows
@@ -75,6 +75,7 @@ export default function AdminPage() {
             userId: r.user_id,
             name: r.profiles?.display_name ?? "Joueur",
             avatarUrl: r.profiles?.avatar_url ?? null,
+            team: r.profiles?.fav_team ?? null,
             isAdmin: r.is_admin,
           }))
           .sort((a, b) => Number(b.isAdmin) - Number(a.isAdmin))
@@ -197,7 +198,7 @@ export default function AdminPage() {
         <div className="space-y-2.5">
           {members.map((mem) => (
             <div key={mem.userId} className="flex items-center gap-3">
-              <Avatar url={mem.avatarUrl} name={mem.name} size={36} />
+              <Avatar url={mem.avatarUrl} name={mem.name} team={mem.team} size={36} />
               <span className="min-w-0 flex-1 truncate font-medium">{mem.name}</span>
               {mem.isAdmin && (
                 <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-accent">

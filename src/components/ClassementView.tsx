@@ -13,6 +13,7 @@ export type LbRow = {
   user_id: string;
   display_name: string;
   avatar_url: string | null;
+  fav_team: string | null;
   total_points: number;
   exact_count: number;
   correct_count: number;
@@ -29,6 +30,7 @@ function PodiumSpot({ row, place, me }: { row: LbRow; place: 1 | 2 | 3; me: bool
       <Avatar
         url={row.avatar_url}
         name={row.display_name}
+        team={row.fav_team}
         size={place === 1 ? 64 : 56}
         className={`mt-1 ${me ? "ring-2 ring-accent" : ""}`}
       />
@@ -45,7 +47,7 @@ function RankRow({ row, rank, me }: { row: LbRow; rank: number; me: boolean }) {
   return (
     <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-card ${me ? "border-accent" : "border-border bg-surface"}`}>
       <span className="w-5 text-center text-sm font-bold tabular-nums text-muted">{rank}</span>
-      <Avatar url={row.avatar_url} name={row.display_name} size={36} />
+      <Avatar url={row.avatar_url} name={row.display_name} team={row.fav_team} size={36} />
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold">
           {row.display_name}

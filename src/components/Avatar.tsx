@@ -1,6 +1,9 @@
+import { teamBackground, teamByCode } from "@/lib/teams";
+
 /**
  * Avatar en carré arrondi : soit l'image perso (personnage entier, object-contain),
  * soit une pastille colorée avec l'initiale en secours. `size` = côté en px.
+ * `team` = code drapeau de l'équipe favorite → colore le fond à ses couleurs.
  */
 export function avatarColor(s: string): string {
   let h = 0;
@@ -13,11 +16,13 @@ export function Avatar({
   name,
   size = 40,
   className = "",
+  team,
 }: {
   url?: string | null;
   name: string;
   size?: number;
   className?: string;
+  team?: string | null;
 }) {
   const radius = Math.round(size * 0.28);
 
@@ -25,13 +30,7 @@ export function Avatar({
     return (
       <span
         className={`inline-flex shrink-0 items-center justify-center overflow-hidden ${className}`}
-        style={{
-          width: size,
-          height: size,
-          borderRadius: radius,
-          background:
-            "radial-gradient(circle at 30% 18%, rgba(255,255,255,0.22), transparent 60%), linear-gradient(145deg, #0a1f4d 0%, #1565e6 100%)",
-        }}
+        style={{ width: size, height: size, borderRadius: radius, background: teamBackground(team) }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={url} alt={`Avatar de ${name}`} loading="lazy" className="h-full w-full object-contain" />
@@ -39,6 +38,7 @@ export function Avatar({
     );
   }
 
+  const t = teamByCode(team);
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center font-bold text-white ${className}`}
@@ -46,7 +46,8 @@ export function Avatar({
         width: size,
         height: size,
         borderRadius: radius,
-        backgroundColor: avatarColor(name),
+        background: t ? `linear-gradient(145deg, ${t.from} 0%, ${t.to} 100%)` : undefined,
+        backgroundColor: t ? undefined : avatarColor(name),
         fontSize: Math.round(size * 0.42),
       }}
     >

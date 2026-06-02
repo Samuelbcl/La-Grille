@@ -27,14 +27,16 @@ export default async function ProfilPage() {
   // Nom affiché
   let name = user?.email?.split("@")[0] ?? "Joueur";
   let avatarUrl: string | null = null;
+  let favTeam: string | null = null;
   if (user) {
     const { data: prof } = await supabase
       .from("profiles")
-      .select("display_name, avatar_url")
+      .select("display_name, avatar_url, fav_team")
       .eq("id", user.id)
       .maybeSingle();
     if (prof?.display_name) name = prof.display_name;
     avatarUrl = prof?.avatar_url ?? null;
+    favTeam = prof?.fav_team ?? null;
   }
 
   // Stats depuis le classement
@@ -69,7 +71,7 @@ export default async function ProfilPage() {
       <div className="px-4 py-4 space-y-5">
         {/* Identité */}
         <div className="flex items-center gap-3.5">
-          <Avatar url={avatarUrl} name={name} size={64} />
+          <Avatar url={avatarUrl} name={name} size={64} team={favTeam} />
           <div className="min-w-0">
             <p className="text-xl font-bold truncate">{name}</p>
             <p className="text-sm text-muted truncate">
@@ -99,7 +101,7 @@ export default async function ProfilPage() {
 
         {/* Choix de l'avatar */}
         <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
-          <AvatarPicker current={avatarUrl} />
+          <AvatarPicker current={avatarUrl} currentTeam={favTeam} />
         </div>
 
         {/* Liens */}
