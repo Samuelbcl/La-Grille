@@ -194,10 +194,10 @@ export default function AdminPage() {
         <h2 className="font-semibold mb-3">
           {pool.name} · {members.length} membre{members.length > 1 ? "s" : ""}
         </h2>
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {members.map((mem) => (
-            <div key={mem.userId} className="flex items-center gap-3">
-              <Avatar url={mem.avatarUrl} name={mem.name} size={36} />
+            <div key={mem.userId} className="flex items-center gap-3.5">
+              <Avatar url={mem.avatarUrl} name={mem.name} size={52} />
               <span className="min-w-0 flex-1 truncate font-medium">{mem.name}</span>
               {mem.isAdmin && (
                 <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-accent">
