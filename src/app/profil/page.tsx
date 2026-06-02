@@ -5,6 +5,7 @@ import { getCurrentPool, getLeaderboard } from "@/lib/queries";
 import { SignOutButton } from "@/components/SignOutButton";
 import { Avatar } from "@/components/Avatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
+import { DisplayNameEditor } from "@/components/DisplayNameEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +74,7 @@ export default async function ProfilPage() {
         <div className="flex items-center gap-3.5">
           <Avatar url={avatarUrl} name={name} size={64} team={favTeam} />
           <div className="min-w-0">
-            <p className="text-xl font-bold truncate">{name}</p>
+            <DisplayNameEditor current={name} />
             <p className="text-sm text-muted truncate">
               {pool ? pool.name : "Pas encore de groupe"}
             </p>

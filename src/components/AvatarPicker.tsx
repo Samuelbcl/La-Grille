@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Flag } from "@/components/Flag";
 import { TEAMS, teamByCode } from "@/lib/teams";
 
 // On tente avatar-1.png … avatar-12.png ; ceux qui n'existent pas se masquent (onError).
@@ -92,25 +91,28 @@ export function AvatarPicker({
       <div>
         <div className="mb-2 flex items-baseline justify-between">
           <p className="text-sm font-semibold">Couleurs de ton équipe</p>
-          {teamName && <span className="text-[12px] text-muted">{teamName}</span>}
+          {teamName && <span className="text-[12px] font-medium text-muted">{teamName}</span>}
         </div>
-        <div className="grid max-h-44 grid-cols-6 gap-2 overflow-y-auto pr-1">
+        <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto pr-1">
           {TEAMS.map((t) => (
             <button
               key={t.code}
               onClick={() => chooseTeam(t.code)}
-              title={t.name}
-              aria-label={t.name}
-              className={`relative grid aspect-square place-items-center overflow-hidden rounded-xl bg-surface-2 transition active:scale-95 ${
+              className={`flex flex-col items-center gap-1 rounded-xl p-1.5 transition active:scale-95 ${
                 team === t.code ? "ring-2 ring-accent" : "border border-border"
               }`}
             >
-              <Flag code={t.code} size={26} />
-              {team === t.code && (
-                <span className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center rounded-full bg-accent text-white">
-                  <Check size={10} />
-                </span>
-              )}
+              <span
+                className="relative block h-8 w-full rounded-lg"
+                style={{ background: `linear-gradient(145deg, ${t.from} 0%, ${t.to} 100%)` }}
+              >
+                {team === t.code && (
+                  <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-white/90 text-accent">
+                    <Check size={11} />
+                  </span>
+                )}
+              </span>
+              <span className="w-full truncate text-center text-[11px] font-medium leading-tight">{t.name}</span>
             </button>
           ))}
         </div>
