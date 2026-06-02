@@ -39,7 +39,7 @@ export default async function CalendrierPage() {
 
   return (
     <>
-      <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
+      <header className="app-header sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3">
         <div className="flex items-baseline justify-between">
           <h1 className="text-[22px] font-bold tracking-tight">{pool.name}</h1>
           <Link href="/regles" className="text-sm text-accent font-medium">

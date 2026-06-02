@@ -1,9 +1,13 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 
-/** Page -> thème (fond + couleurs). Voir globals.css [data-theme]. */
+export const THEME_KEY = "lagrille:theme";
+export const THEME_EVENT = "lagrille:themechange";
+
+/** Page -> thème par défaut (fond + couleurs). Voir globals.css [data-theme]. */
 function themeFor(path: string): string {
   if (path === "/") return "calendrier";
   if (path.startsWith("/pronos")) return "pronos";
@@ -16,13 +20,34 @@ function themeFor(path: string): string {
 }
 
 /**
- * Enveloppe l'app : applique le thème de la page (data-theme), pose le fond
- * d'ambiance plein écran, et englobe le contenu + la barre d'onglets (qui
- * hérite ainsi des couleurs de la page). La connexion est en plein écran.
+ * Enveloppe l'app : applique le thème (data-theme), pose le fond d'ambiance
+ * plein écran, et englobe le contenu + la barre d'onglets (qui hérite des
+ * couleurs de la page). Si l'utilisateur a choisi un fond (localStorage), il
+ * s'applique à TOUTE l'app ; sinon c'est le fond par défaut de chaque page.
  */
 export function ThemeShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const theme = themeFor(pathname);
+  const [userTheme, setUserTheme] = useState<string | null>(null);
+
+  useEffect(() => {
+    const read = () => {
+      try {
+        const t = localStorage.getItem(THEME_KEY);
+        setUserTheme(t && t !== "auto" ? t : null);
+      } catch {
+        setUserTheme(null);
+      }
+    };
+    read();
+    window.addEventListener(THEME_EVENT, read);
+    window.addEventListener("storage", read);
+    return () => {
+      window.removeEventListener(THEME_EVENT, read);
+      window.removeEventListener("storage", read);
+    };
+  }, []);
+
+  const theme = userTheme ?? themeFor(pathname);
   const fullScreen = pathname === "/login";
 
   return (

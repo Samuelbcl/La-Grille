@@ -11,7 +11,7 @@ export default async function PronosPage() {
   if (!pool) {
     return (
       <>
-        <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
+        <header className="app-header sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3">
           <h1 className="text-[22px] font-bold tracking-tight">Pronos</h1>
         </header>
         <p className="px-6 pt-16 text-center text-muted">
@@ -36,7 +36,7 @@ export default async function PronosPage() {
 
   return (
     <>
-      <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
+      <header className="app-header sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3">
         <h1 className="text-[22px] font-bold tracking-tight">Pronos</h1>
         <p className="text-[13px]">
           {pending > 0 ? (

@@ -5,6 +5,7 @@ import { getCurrentPool, getLeaderboard } from "@/lib/queries";
 import { SignOutButton } from "@/components/SignOutButton";
 import { Avatar } from "@/components/Avatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
+import { BackgroundPicker } from "@/components/BackgroundPicker";
 import { DisplayNameEditor } from "@/components/DisplayNameEditor";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +64,7 @@ export default async function ProfilPage() {
 
   return (
     <>
-      <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
+      <header className="app-header sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3">
         <h1 className="text-[22px] font-bold tracking-tight">Profil</h1>
       </header>
 
@@ -101,6 +102,11 @@ export default async function ProfilPage() {
         {/* Choix de l'avatar */}
         <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
           <AvatarPicker current={avatarUrl} />
+        </div>
+
+        {/* Choix du fond de l'app */}
+        <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
+          <BackgroundPicker />
         </div>
 
         {/* Liens */}

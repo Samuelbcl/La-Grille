@@ -35,7 +35,7 @@ export default async function ClassementPage() {
 
   return (
     <>
-      <header className="glass sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3 border-b border-border">
+      <header className="app-header sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3">
         <div className="flex items-center justify-between">
           <h1 className="text-[22px] font-bold tracking-tight">Classement</h1>
           {players.length > 0 && <ShareButton text={shareText} />}

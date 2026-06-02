@@ -127,3 +127,13 @@ textarea::placeholder {
   backdrop-filter: saturate(180%) blur(22px);
   -webkit-backdrop-filter: saturate(180%) blur(22px);
 }
+
+/* En-tête de page : voile dégradé léger (le fond reste visible en haut). */
+.app-header {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--bg) 55%, transparent) 0%,
+    color-mix(in srgb, var(--bg) 22%, transparent) 55%,
+    transparent 100%
+  );
+}
