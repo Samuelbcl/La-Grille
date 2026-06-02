@@ -162,13 +162,19 @@ export function ClassementView({
       <div className="mb-4 flex rounded-2xl bg-surface-2 p-1 text-sm font-medium">
         <button
           onClick={() => setTab("players")}
-          className={cn("flex-1 rounded-xl py-2", tab === "players" ? "bg-surface shadow-card" : "text-muted")}
+          className={cn(
+            "flex-1 rounded-xl py-2 transition",
+            tab === "players" ? "bg-accent text-accent-fg shadow-card" : "text-muted"
+          )}
         >
           Joueurs
         </button>
         <button
           onClick={() => setTab("groups")}
-          className={cn("flex-1 rounded-xl py-2", tab === "groups" ? "bg-surface shadow-card" : "text-muted")}
+          className={cn(
+            "flex-1 rounded-xl py-2 transition",
+            tab === "groups" ? "bg-accent text-accent-fg shadow-card" : "text-muted"
+          )}
         >
           Poules
         </button>

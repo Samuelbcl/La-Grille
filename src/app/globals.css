@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* Palette épurée, façon iOS — fond clair, un seul accent */
+  /* Palette de base (utilisée hors thème : splash, onboarding) */
   --bg: #f5f5f7;
   --surface: #ffffff;
   --surface-2: #fafafa;
   --border: #e7e7ea;
   --text: #1d1d1f;
   --muted: #86868b;
-  --accent: #0a84ff; /* bleu iOS */
+  --accent: #0a84ff;
   --accent-fg: #ffffff;
   --success: #34c759;
   --warning: #ff9f0a;
@@ -19,30 +19,84 @@
   --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #000000;
-    --surface: #1c1c1e;
-    --surface-2: #2c2c2e;
-    --border: #38383a;
-    --text: #f5f5f7;
-    --muted: #98989d;
-    --accent: #0a84ff;
-    --success: #30d158;
-    --warning: #ff9f0a;
-  }
+/* =====================================================================
+   THÈMES PAR PAGE — un fond d'ambiance + des couleurs qui s'adaptent.
+   Le texte, l'accent, les cartes (verre) découlent de ces variables.
+   ===================================================================== */
+
+/* --- Base SOMBRE commune (texte clair, cartes en verre sombre) --- */
+[data-theme="pronos"],
+[data-theme="classement"],
+[data-theme="profil"],
+[data-theme="groupe"],
+[data-theme="login"] {
+  --surface: rgba(20, 24, 38, 0.55);
+  --surface-2: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.13);
+  --text: #f6f7f9;
+  --muted: rgba(233, 237, 246, 0.66);
+  --accent-fg: #ffffff;
+  --success: #3ddc84;
+  --warning: #ffc24b;
 }
+
+[data-theme="pronos"],
+[data-theme="login"] { --bg: #0a1430; --accent: #2e90ff; }
+[data-theme="classement"] { --bg: #07210f; --accent: #2ecf73; --success: #5be39a; }
+[data-theme="profil"] { --bg: #1a0708; --accent: #ff5b4e; }
+[data-theme="groupe"] { --bg: #0b0f1c; --accent: #8d7bff; }
+
+/* --- Thème CLAIR (Calendrier) : fond crème, texte foncé, verre clair --- */
+[data-theme="calendrier"] {
+  --bg: #efe6d3;
+  --surface: rgba(255, 255, 255, 0.58);
+  --surface-2: rgba(255, 255, 255, 0.42);
+  --border: rgba(50, 38, 15, 0.12);
+  --text: #241d10;
+  --muted: rgba(70, 58, 35, 0.62);
+  --accent: #b9770b;
+  --accent-fg: #ffffff;
+  --success: #1f9d57;
+  --warning: #b9770b;
+}
+
+/* La racine de thème porte la couleur de texte → héritée par tout le contenu. */
+.theme-root {
+  color: var(--text);
+}
+
+/* Fond d'ambiance plein écran, derrière tout, selon la page. */
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+[data-theme="pronos"] .app-bg,
+[data-theme="login"] .app-bg { background-image: url(/bg/pronos.webp); }
+[data-theme="calendrier"] .app-bg { background-image: url(/bg/calendrier.webp); }
+[data-theme="classement"] .app-bg { background-image: url(/bg/classement.webp); }
+[data-theme="groupe"] .app-bg { background-image: url(/bg/groupe.webp); }
+[data-theme="profil"] .app-bg { background-image: url(/bg/profil.webp); }
 
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--bg);
+  background: #0a1430; /* base sombre avant chargement du fond */
   color: var(--text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
 }
 
 /* Masque la barre de scroll horizontale des bandeaux de jours */
@@ -54,9 +108,22 @@ body {
   scrollbar-width: none;
 }
 
+/* =====================================================================
+   LIQUID GLASS — toute surface translucide devient du verre flou.
+   (Les couleurs --surface étant translucides, le flou révèle le fond.)
+   ===================================================================== */
+.bg-surface {
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+}
+.bg-surface-2 {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
 /* Effet "verre" pour les barres translucides (header / nav) */
 .glass {
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: color-mix(in srgb, var(--bg) 68%, transparent);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
 }
