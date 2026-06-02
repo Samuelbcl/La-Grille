@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
+import { AppMain } from "@/components/AppMain";
 import { Splash } from "@/components/Splash";
 import { Onboarding } from "@/components/Onboarding";
 
@@ -27,9 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Splash />
         <Onboarding />
-        <main className="mx-auto max-w-md min-h-dvh pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-          {children}
-        </main>
+        <AppMain>{children}</AppMain>
         <BottomNav />
       </body>
     </html>

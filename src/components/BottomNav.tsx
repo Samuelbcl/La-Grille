@@ -15,6 +15,8 @@ const tabs = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  // Pas de barre d'onglets sur la page de connexion (vraie page plein écran).
+  if (pathname === "/login") return null;
   return (
     <nav className="glass fixed bottom-0 inset-x-0 z-40 border-t border-border pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-md">
