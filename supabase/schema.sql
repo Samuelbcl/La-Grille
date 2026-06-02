@@ -119,7 +119,11 @@ select
   p.pred_a, p.pred_b,
   m.score_a, m.score_b,
   m.status,
-  public.compute_points(p.pred_a, p.pred_b, m.score_a, m.score_b, m.stage) as points,
+  -- Les points ne comptent QUE pour un match TERMINÉ (sinon un 0-0 au coup
+  -- d'envoi donnerait des points provisoires aux pronos « match nul »).
+  case when m.status = 'finished'
+       then public.compute_points(p.pred_a, p.pred_b, m.score_a, m.score_b, m.stage)
+       else 0 end as points,
   (m.status = 'finished' and p.pred_a = m.score_a and p.pred_b = m.score_b) as is_exact
 from public.predictions p
 join public.matches m on m.id = p.match_id;
