@@ -60,6 +60,43 @@
   --warning: #b9770b;
 }
 
+/* --- Thème CLASSIQUE : pas de fond image, blanc/noir selon le mode du tel. --- */
+[data-theme="classic"] {
+  --bg: #f5f5f7;
+  --surface: #ffffff;
+  --surface-2: #fafafa;
+  --border: #e7e7ea;
+  --text: #1d1d1f;
+  --muted: #86868b;
+  --accent: #0a84ff;
+  --accent-fg: #ffffff;
+  --success: #34c759;
+  --warning: #ff9f0a;
+}
+@media (prefers-color-scheme: dark) {
+  [data-theme="classic"] {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --border: #38383a;
+    --text: #f5f5f7;
+    --muted: #98989d;
+    --accent: #0a84ff;
+    --success: #30d158;
+    --warning: #ff9f0a;
+  }
+}
+[data-theme="classic"] .app-bg {
+  background-image: none;
+  background-color: var(--bg);
+}
+[data-theme="classic"] .app-header {
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
 /* La racine de thème porte la couleur de texte → héritée par tout le contenu. */
 .theme-root {
   color: var(--text);

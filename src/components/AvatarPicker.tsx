@@ -31,7 +31,6 @@ export function AvatarPicker({ current }: { current: string | null }) {
 
   return (
     <div>
-      <p className="mb-2 text-sm font-semibold">Choisis ton avatar</p>
       {allHidden ? (
         <p className="text-[13px] text-muted">
           Aucun avatar disponible pour l&apos;instant. (Dépose des images dans public/avatars/.)

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentPool, getLeaderboard } from "@/lib/queries";
 import { SignOutButton } from "@/components/SignOutButton";
@@ -99,15 +99,26 @@ export default async function ProfilPage() {
           </p>
         )}
 
-        {/* Choix de l'avatar */}
-        <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
-          <AvatarPicker current={avatarUrl} />
-        </div>
+        {/* Personnalisation — repliée par défaut pour garder la page propre */}
+        <details className="group overflow-hidden rounded-2xl bg-surface border border-border shadow-card">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 font-medium [&::-webkit-details-marker]:hidden">
+            Mon avatar
+            <ChevronDown size={18} className="text-muted transition group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-border px-4 py-4">
+            <AvatarPicker current={avatarUrl} />
+          </div>
+        </details>
 
-        {/* Choix du fond de l'app */}
-        <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
-          <BackgroundPicker />
-        </div>
+        <details className="group overflow-hidden rounded-2xl bg-surface border border-border shadow-card">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3.5 font-medium [&::-webkit-details-marker]:hidden">
+            Fond de l&apos;app
+            <ChevronDown size={18} className="text-muted transition group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-border px-4 py-4">
+            <BackgroundPicker />
+          </div>
+        </details>
 
         {/* Liens */}
         <div className="rounded-2xl bg-surface border border-border shadow-card divide-y divide-border">
