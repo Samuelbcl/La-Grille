@@ -15,7 +15,7 @@ export default async function CalendrierPage() {
         <h1 className="text-2xl font-bold">Bienvenue !</h1>
         <p className="text-muted mt-2 mb-6">
           Crée ton groupe de pronos, ou rejoins celui de tes potes avec un code,
-          depuis l&apos;onglet <b>Gérer</b>.
+          depuis l&apos;onglet <b>Groupe</b>.
         </p>
         <Link
           href="/admin"
@@ -52,7 +52,7 @@ export default async function CalendrierPage() {
       <div className="px-4 py-4 space-y-6">
         {matches.length === 0 && (
           <p className="text-center text-muted pt-16">
-            Aucun match pour l&apos;instant. L&apos;organisateur peut les charger dans <b>Gérer</b>.
+            Aucun match pour l&apos;instant. L&apos;organisateur peut les charger dans <b>Groupe</b>.
           </p>
         )}
         {[...days.entries()].map(([day, list]) => (

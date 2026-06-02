@@ -46,7 +46,9 @@ export function Onboarding() {
     <div className="fixed inset-0 z-[90] grid place-items-center bg-black/40 px-6">
       <div className="w-full max-w-sm rounded-3xl bg-surface p-6 shadow-float animate-fade-up">
         <h2 className="text-center text-xl font-bold">Bienvenue sur La Grille ⚽️</h2>
-        <p className="mt-1 text-center text-sm text-muted">Le concours de pronos entre potes.</p>
+        <p className="mt-1 text-center text-sm text-muted">
+          Pronostique la Coupe du Monde 2026, chambre tes potes.
+        </p>
         <div className="mt-5 space-y-3">
           <Step
             icon={<ListChecks size={18} />}

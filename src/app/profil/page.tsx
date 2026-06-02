@@ -93,7 +93,7 @@ export default async function ProfilPage() {
           </>
         ) : (
           <p className="text-center text-muted pt-6">
-            Rejoins un groupe depuis l'onglet <b>Gérer</b> pour voir tes stats.
+            Rejoins un groupe depuis l'onglet <b>Groupe</b> pour voir tes stats.
           </p>
         )}
 

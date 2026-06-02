@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 type Acc = { email: string; name: string };
 const LS_KEY = "lagrille:accounts";
 
-/** E-mail interne déterministe à partir du prénom + nom (jamais affiché). */
+/** E-mail interne déterministe à partir du nom d'utilisateur (jamais affiché). */
 function slug(s: string): string {
   return s
     .normalize("NFD")
@@ -18,16 +18,15 @@ function slug(s: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
 }
-function emailFrom(prenom: string, nom: string): string {
-  return `${slug(prenom)}.${slug(nom)}@lagrille.app`;
+function emailFrom(username: string): string {
+  return `${slug(username)}@lagrille.app`;
 }
 
 export default function LoginPage() {
   const [accounts, setAccounts] = useState<Acc[]>([]);
   const [view, setView] = useState<"picker" | "login" | "signup">("login");
   const [locked, setLocked] = useState<Acc | null>(null); // profil tapé (email connu)
-  const [prenom, setPrenom] = useState("");
-  const [nom, setNom] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +68,7 @@ export default function LoginPage() {
 
   function otherAccount() {
     setLocked(null);
-    setPrenom("");
-    setNom("");
+    setUsername("");
     setPassword("");
     setError(null);
     setView("login");
@@ -83,8 +81,8 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (view === "signup") {
-      const email = emailFrom(prenom, nom);
-      const displayName = `${prenom.trim()} ${nom.trim()}`.trim();
+      const email = emailFrom(username);
+      const displayName = username.trim();
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -93,14 +91,14 @@ export default function LoginPage() {
       if (error) {
         setLoading(false);
         if (error.message.toLowerCase().includes("already registered"))
-          return setError("Ce prénom + nom a déjà un compte — connecte-toi.");
+          return setError("Ce nom d'utilisateur est déjà pris — connecte-toi.");
         if (error.message.toLowerCase().includes("at least"))
           return setError("Mot de passe : au moins 6 caractères.");
         return setError(error.message);
       }
       if (!data.session) {
         setLoading(false);
-        return setError("Ce prénom + nom a déjà un compte — connecte-toi.");
+        return setError("Ce nom d'utilisateur est déjà pris — connecte-toi.");
       }
       remember({ email, name: displayName });
       window.location.assign("/");
@@ -108,18 +106,18 @@ export default function LoginPage() {
     }
 
     // Connexion
-    const email = locked ? locked.email : emailFrom(prenom, nom);
+    const email = locked ? locked.email : emailFrom(username);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setLoading(false);
       return setError("Mot de passe incorrect (ou compte inexistant).");
     }
-    remember({ email, name: locked ? locked.name : `${prenom.trim()} ${nom.trim()}`.trim() });
+    remember({ email, name: locked ? locked.name : username.trim() });
     window.location.assign("/");
   }
 
   const canSubmit =
-    password.length >= 6 && (view === "picker" ? false : locked ? true : prenom.trim() && nom.trim());
+    password.length >= 6 && (view === "picker" ? false : locked ? true : !!username.trim());
 
   return (
     <div className="flex min-h-dvh flex-col justify-center px-6 -mt-8">
@@ -133,7 +131,7 @@ export default function LoginPage() {
           className="mx-auto mb-3 rounded-[22px] shadow-card"
         />
         <h1 className="text-3xl font-bold tracking-tight">La Grille</h1>
-        <p className="text-muted mt-1">Le concours de pronos entre potes.</p>
+        <p className="text-muted mt-1">Pronostique la Coupe du Monde, chambre tes potes. ⚽</p>
       </div>
 
       {/* --- Choix du profil --- */}
@@ -187,20 +185,12 @@ export default function LoginPage() {
               <span className="min-w-0 font-semibold truncate">{locked.name}</span>
             </div>
           ) : (
-            <div className="flex gap-2">
-              <input
-                value={prenom}
-                onChange={(e) => setPrenom(e.target.value)}
-                placeholder="Prénom"
-                className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-              />
-              <input
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                placeholder="Nom"
-                className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-              />
-            </div>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Nom d'utilisateur"
+              className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
+            />
           )}
           <input
             value={password}
@@ -233,20 +223,12 @@ export default function LoginPage() {
       {/* --- Création de compte --- */}
       {view === "signup" && (
         <form onSubmit={submit} className="space-y-3 animate-fade-up">
-          <div className="flex gap-2">
-            <input
-              value={prenom}
-              onChange={(e) => setPrenom(e.target.value)}
-              placeholder="Prénom"
-              className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-            />
-            <input
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-              placeholder="Nom"
-              className="w-1/2 h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
-            />
-          </div>
+          <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Nom d'utilisateur"
+            className="w-full h-12 rounded-2xl border border-border bg-surface px-4 outline-none focus:border-accent"
+          />
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -270,8 +252,8 @@ export default function LoginPage() {
       )}
 
       <p className="text-center text-xs text-muted px-4 pt-5">
-        Pas d&apos;e-mail : juste prénom, nom et mot de passe. Tu restes connecté,
-        et tu peux revenir d&apos;un tap sur ton profil.
+        Choisis ton pseudo, garde ton mot de passe secret comme une compo d&apos;équipe,
+        et que le meilleur gagne ! 🏆
       </p>
     </div>
   );

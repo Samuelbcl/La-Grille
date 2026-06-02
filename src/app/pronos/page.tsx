@@ -15,7 +15,7 @@ export default async function PronosPage() {
           <h1 className="text-[22px] font-bold tracking-tight">Pronos</h1>
         </header>
         <p className="px-6 pt-16 text-center text-muted">
-          Rejoins un groupe depuis l&apos;onglet <b>Gérer</b> pour commencer à pronostiquer.
+          Rejoins un groupe depuis l&apos;onglet <b>Groupe</b> pour commencer à pronostiquer.
         </p>
       </>
     );
