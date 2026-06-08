@@ -189,11 +189,13 @@ export function MatchCard({
         </div>
       ) : (
         <>
-          <Row name={m.team_a} code={m.team_a_code} score={m.score_a} />
+          {/* Page Pronos (editable) : on montre TON prono à droite (comme un score).
+              Page Calendrier (lecture) : on montre le vrai score. */}
+          <Row name={m.team_a} code={m.team_a_code} score={editable ? predA : m.score_a} />
           <div className="h-px bg-border my-2" />
-          <Row name={m.team_b} code={m.team_b_code} score={m.score_b} />
+          <Row name={m.team_b} code={m.team_b_code} score={editable ? predB : m.score_b} />
 
-          {hasPred && (
+          {!editable && hasPred && (
             <div className="mt-3 text-[11px] text-muted">
               Ton prono : <span className="text-text font-semibold">{predA} – {predB}</span>
             </div>
