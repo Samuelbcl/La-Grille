@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentPool, getMatchesWithPredictions } from "@/lib/queries";
 import { MatchCard } from "@/components/MatchCard";
+import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { dayKey } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function CalendrierPage() {
 
   return (
     <>
+      <RealtimeRefresh poolId={pool.id} />
       <header className="app-header sticky top-0 z-30 px-5 pt-[calc(env(safe-area-inset-top)+14px)] pb-3">
         <div className="flex items-baseline justify-between">
           <h1 className="text-[22px] font-bold tracking-tight">{pool.name}</h1>
