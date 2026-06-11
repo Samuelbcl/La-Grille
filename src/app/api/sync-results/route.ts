@@ -81,7 +81,7 @@ export async function GET(request: Request) {
   };
 
   // --- 2) Index poules (par paire) + matchs de phase finale (équipes connues) ---
-  const apiByPair = new Map<string, { home: string; away: string; st: St; hs: number | null; as: number | null }>();
+  const apiByPair = new Map<string, { home: string; away: string; apiStatus: string; hs: number | null; as: number | null }>();
   type Ko = { matchNo: number; stage: string; home: string; away: string; st: St; hs: number | null; as: number | null; kickoff: string; venue: string | null };
   const knockout: Ko[] = [];
 
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
     const as = m.score?.fullTime?.away ?? null;
     if (m.stage === "GROUP_STAGE") {
       if (!home || !away) continue;
-      apiByPair.set(pairKey(home, away), { home, away, st: apiState(m, hs, as), hs, as });
+      apiByPair.set(pairKey(home, away), { home, away, apiStatus: m.status ?? "", hs, as });
     } else if (STAGE_MAP[m.stage] && home && away) {
       // matchs à élimination directe avec les DEUX équipes déterminées
       knockout.push({ matchNo: m.id, stage: STAGE_MAP[m.stage], home, away, st: apiState(m, hs, as), hs, as, kickoff: m.utcDate, venue: m.venue ?? null });
@@ -119,23 +119,38 @@ export async function GET(request: Request) {
   }
   const poolIds = [...poolSet];
 
-  // --- 4) Réconciliation des poules : l'API fait foi (terminé / en cours / à venir) ---
+  // --- 4) Réconciliation des poules : l'API fait foi, MAIS sans jamais
+  //        "rétrograder" un match. L'API gratuite renvoie parfois le score à
+  //        null par intermittence (vu en vrai : un appel vide, le suivant 2-0) ;
+  //        on ne reset donc JAMAIS un résultat sur un hoquet. Transitions
+  //        autorisées : à venir -> en cours -> terminé (et corrections de score
+  //        à statut égal). Jamais l'inverse.
+  const RANK: Record<string, number> = { scheduled: 0, live: 1, finished: 2 };
   let updated = 0;
   for (const r of rows ?? []) {
     const result = apiByPair.get(pairKey(r.team_a, r.team_b));
     if (!result) continue;
-    let scoreA: number | null = null;
-    let scoreB: number | null = null;
-    let status = "scheduled";
-    if (result.st === "finished" || result.st === "live") {
-      scoreA = r.team_a === result.home ? result.hs : result.as;
-      scoreB = r.team_a === result.home ? result.as : result.hs;
-      status = result.st;
-    }
-    if (r.status === status && r.score_a === scoreA && r.score_b === scoreB) continue;
+    const { hs, as, apiStatus } = result;
+    const hasScore = hs != null && as != null;
+    const sA = r.team_a === result.home ? hs : as;
+    const sB = r.team_a === result.home ? as : hs;
+
+    // État cible depuis l'API — seulement s'il est crédible.
+    let target: { status: string; scoreA: number | null; scoreB: number | null } | null = null;
+    if (apiStatus === "FINISHED" && hasScore) target = { status: "finished", scoreA: sA, scoreB: sB };
+    else if ((apiStatus === "IN_PLAY" || apiStatus === "PAUSED") && hasScore)
+      target = { status: "live", scoreA: sA, scoreB: sB };
+    else if (apiStatus === "TIMED" || apiStatus === "SCHEDULED")
+      target = { status: "scheduled", scoreA: null, scoreB: null };
+    // FINISHED/IN_PLAY sans score (hoquet API) -> target null -> on ne touche à rien.
+    if (!target) continue;
+
+    if (RANK[target.status] < (RANK[r.status] ?? 0)) continue; // jamais de retour en arrière
+    if (r.status === target.status && r.score_a === target.scoreA && r.score_b === target.scoreB) continue;
+
     const { error: upErr } = await admin
       .from("matches")
-      .update({ score_a: scoreA, score_b: scoreB, status })
+      .update({ score_a: target.scoreA, score_b: target.scoreB, status: target.status })
       .eq("id", r.id);
     if (!upErr) updated++;
   }
