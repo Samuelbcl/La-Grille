@@ -312,11 +312,39 @@ create policy "predictions update" on public.predictions for update
   );
 
 -- =====================================================================
---  REALTIME — diffuser les changements de matchs (classement en direct)
+--  RÉACTIONS EMOJI sur les matchs (chambrage entre potes)
+-- =====================================================================
+create table if not exists public.match_reactions (
+  match_id   uuid not null references public.matches (id) on delete cascade,
+  user_id    uuid not null references public.profiles (id) on delete cascade,
+  pool_id    uuid not null references public.pools (id) on delete cascade,  -- dénormalisé (RLS + realtime)
+  emoji      text not null,                                                 -- "emoji-1".."emoji-10"
+  created_at timestamptz not null default now(),
+  primary key (match_id, user_id, emoji)
+);
+alter table public.match_reactions enable row level security;
+
+drop policy if exists "reactions read" on public.match_reactions;
+create policy "reactions read" on public.match_reactions for select
+  using (public.is_pool_member(pool_id));
+drop policy if exists "reactions insert" on public.match_reactions;
+create policy "reactions insert" on public.match_reactions for insert
+  with check (user_id = auth.uid() and public.is_pool_member(pool_id));
+drop policy if exists "reactions delete" on public.match_reactions;
+create policy "reactions delete" on public.match_reactions for delete
+  using (user_id = auth.uid());
+
+-- =====================================================================
+--  REALTIME — diffuser matchs (classement/scores en direct) + réactions
 -- =====================================================================
 do $$
 begin
   alter publication supabase_realtime add table public.matches;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.match_reactions;
 exception when duplicate_object then null;
 end $$;
 

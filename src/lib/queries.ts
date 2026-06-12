@@ -46,6 +46,28 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
   }));
 }
 
+/** Réactions emoji d'un pool, agrégées par match : { matchId: { emoji: { count, mine } } }. */
+export type ReactionCounts = Record<string, { count: number; mine: boolean }>;
+export async function getReactions(
+  poolId: string,
+  userId: string
+): Promise<Record<string, ReactionCounts>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("match_reactions")
+    .select("match_id, user_id, emoji")
+    .eq("pool_id", poolId);
+
+  const byMatch: Record<string, ReactionCounts> = {};
+  for (const r of data ?? []) {
+    const m = (byMatch[r.match_id] ??= {});
+    const e = (m[r.emoji] ??= { count: 0, mine: false });
+    e.count++;
+    if (r.user_id === userId) e.mine = true;
+  }
+  return byMatch;
+}
+
 /** Classement trié. */
 export async function getLeaderboard(poolId: string) {
   const supabase = await createClient();

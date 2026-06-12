@@ -21,6 +21,11 @@ export function RealtimeRefresh({ poolId }: { poolId: string }) {
         { event: "*", schema: "public", table: "matches", filter: `pool_id=eq.${poolId}` },
         () => router.refresh()
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "match_reactions", filter: `pool_id=eq.${poolId}` },
+        () => router.refresh()
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);

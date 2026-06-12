@@ -9,6 +9,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
+import { MatchReactions } from "@/components/MatchReactions";
+import type { ReactionCounts } from "@/lib/queries";
 
 type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; isMine: boolean };
 
@@ -32,10 +34,14 @@ export function MatchCard({
   m,
   userId,
   editable = false,
+  poolId,
+  reactions,
 }: {
   m: MatchCardData;
   userId: string | null;
   editable?: boolean;
+  poolId?: string;
+  reactions?: ReactionCounts;
 }) {
   const router = useRouter();
   const locked = new Date(m.kickoff) <= new Date();
@@ -203,6 +209,11 @@ export function MatchCard({
           {badge && <div className={`mt-1 text-[11px] font-semibold ${badge.cls}`}>{badge.text}</div>}
           {!hasPred && locked && (
             <div className="mt-3 text-[11px] text-muted">Tu n&apos;as pas pronostiqué ce match.</div>
+          )}
+
+          {/* Réactions emoji (chambrage) — sur le Calendrier */}
+          {!editable && poolId && (
+            <MatchReactions matchId={m.id} poolId={poolId} userId={userId} initial={reactions ?? {}} />
           )}
 
           {/* Pronos des potes — visibles seulement après le coup d'envoi */}
