@@ -9,10 +9,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
-import { MatchReactions } from "@/components/MatchReactions";
+import { ReactionBar } from "@/components/ReactionBar";
 import type { ReactionCounts } from "@/lib/queries";
 
-type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; isMine: boolean };
+type PeerPred = { userId: string; name: string; avatarUrl: string | null; a: number; b: number; pts: number; isMine: boolean };
 
 export interface MatchCardData {
   id: string;
@@ -35,13 +35,11 @@ export function MatchCard({
   userId,
   editable = false,
   poolId,
-  reactions,
 }: {
   m: MatchCardData;
   userId: string | null;
   editable?: boolean;
   poolId?: string;
-  reactions?: ReactionCounts;
 }) {
   const router = useRouter();
   const locked = new Date(m.kickoff) <= new Date();
@@ -63,6 +61,7 @@ export function MatchCard({
   // Pronos des potes (visibles après le coup d'envoi — RLS anti-triche).
   const [showPeers, setShowPeers] = useState(false);
   const [peers, setPeers] = useState<PeerPred[] | null>(null);
+  const [peerReactions, setPeerReactions] = useState<Record<string, ReactionCounts>>({});
   const [loadingPeers, setLoadingPeers] = useState(false);
 
   async function togglePeers() {
@@ -73,10 +72,22 @@ export function MatchCard({
     setShowPeers(true);
     setLoadingPeers(true);
     const supabase = createClient();
-    const { data } = await supabase
-      .from("predictions")
-      .select("user_id, pred_a, pred_b, profiles(display_name, avatar_url)")
-      .eq("match_id", m.id);
+    const [{ data }, { data: rx }] = await Promise.all([
+      supabase
+        .from("predictions")
+        .select("user_id, pred_a, pred_b, profiles(display_name, avatar_url)")
+        .eq("match_id", m.id),
+      supabase.from("reactions").select("target_user_id, reactor_id, emoji").eq("match_id", m.id),
+    ]);
+    // Réactions agrégées par joueur ciblé (son prono sur ce match).
+    const byTarget: Record<string, ReactionCounts> = {};
+    for (const r of rx ?? []) {
+      const t = (byTarget[r.target_user_id] ??= {});
+      const e = (t[r.emoji] ??= { count: 0, mine: false });
+      e.count++;
+      if (r.reactor_id === userId) e.mine = true;
+    }
+    setPeerReactions(byTarget);
     const list: PeerPred[] = (data ?? []).map((p) => {
       const row = p as unknown as {
         user_id: string;
@@ -85,6 +96,7 @@ export function MatchCard({
         profiles: { display_name: string; avatar_url: string | null } | null;
       };
       return {
+        userId: row.user_id,
         name: row.profiles?.display_name ?? "Joueur",
         avatarUrl: row.profiles?.avatar_url ?? null,
         a: row.pred_a,
@@ -211,11 +223,6 @@ export function MatchCard({
             <div className="mt-3 text-[11px] text-muted">Tu n&apos;as pas pronostiqué ce match.</div>
           )}
 
-          {/* Réactions emoji (chambrage) — sur le Calendrier */}
-          {!editable && poolId && (
-            <MatchReactions matchId={m.id} poolId={poolId} userId={userId} initial={reactions ?? {}} />
-          )}
-
           {/* Pronos des potes — visibles seulement après le coup d'envoi */}
           {locked && (
             <div className="mt-3 border-t border-border pt-3">
@@ -233,25 +240,40 @@ export function MatchCard({
                     <p className="text-[12px] text-muted">Aucun prono sur ce match.</p>
                   )}
                   {!loadingPeers &&
-                    peers?.map((p, i) => (
-                      <div key={i} className="flex items-center justify-between gap-2 text-[13px]">
-                        <span className="flex min-w-0 items-center gap-2">
-                          <Avatar url={p.avatarUrl} name={p.name} size={20} />
-                          <span className={`truncate ${p.isMine ? "font-semibold text-accent" : ""}`}>
-                            {p.name}
-                            {p.isMine ? " · toi" : ""}
-                          </span>
-                        </span>
-                        <span className="flex shrink-0 items-center gap-2">
-                          <span className="tabular-nums font-semibold">
-                            {p.a}–{p.b}
-                          </span>
-                          {finished && (
-                            <span className={`tabular-nums text-[11px] ${p.pts > 0 ? "text-success" : "text-muted"}`}>
-                              +{p.pts}
+                    peers?.map((p) => (
+                      <div key={p.userId}>
+                        <div className="flex items-center justify-between gap-2 text-[13px]">
+                          <span className="flex min-w-0 items-center gap-2">
+                            <Avatar url={p.avatarUrl} name={p.name} size={20} />
+                            <span className={`truncate ${p.isMine ? "font-semibold text-accent" : ""}`}>
+                              {p.name}
+                              {p.isMine ? " · toi" : ""}
                             </span>
-                          )}
-                        </span>
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2">
+                            <span className="tabular-nums font-semibold">
+                              {p.a}–{p.b}
+                            </span>
+                            {finished && (
+                              <span className={`tabular-nums text-[11px] ${p.pts > 0 ? "text-success" : "text-muted"}`}>
+                                +{p.pts}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        {/* Chambrer le prono de ce pote (pas le sien) */}
+                        {!p.isMine && poolId && (
+                          <div className="mt-1 pl-7">
+                            <ReactionBar
+                              poolId={poolId}
+                              targetUserId={p.userId}
+                              matchId={m.id}
+                              userId={userId}
+                              initial={peerReactions[p.userId] ?? {}}
+                              size="xs"
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                 </div>

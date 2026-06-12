@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getCurrentPool, getMatchesWithPredictions, getReactions } from "@/lib/queries";
+import { getCurrentPool, getMatchesWithPredictions } from "@/lib/queries";
 import { MatchCard } from "@/components/MatchCard";
 import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { LiveBanner } from "@/components/LiveBanner";
@@ -29,10 +29,7 @@ export default async function CalendrierPage() {
     );
   }
 
-  const [matches, reactionsByMatch] = await Promise.all([
-    getMatchesWithPredictions(pool.id, pool.user_id),
-    getReactions(pool.id, pool.user_id),
-  ]);
+  const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
   const live = matches.filter((m) => m.status === "live");
 
   // Regroupe par jour
@@ -71,13 +68,7 @@ export default async function CalendrierPage() {
             </h2>
             <div className="space-y-2.5">
               {list.map((m) => (
-                <MatchCard
-                  key={m.id}
-                  m={m}
-                  userId={pool.user_id}
-                  poolId={pool.id}
-                  reactions={reactionsByMatch[m.id]}
-                />
+                <MatchCard key={m.id} m={m} userId={pool.user_id} poolId={pool.id} />
               ))}
             </div>
           </section>

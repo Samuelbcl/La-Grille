@@ -46,26 +46,29 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
   }));
 }
 
-/** Réactions emoji d'un pool, agrégées par match : { matchId: { emoji: { count, mine } } }. */
+/** Réactions emoji agrégées par joueur ciblé : { targetUserId: { emoji: { count, mine } } }. */
 export type ReactionCounts = Record<string, { count: number; mine: boolean }>;
-export async function getReactions(
+
+/** Réactions au CLASSEMENT (match_id null) du pool, par joueur. */
+export async function getPlayerReactions(
   poolId: string,
   userId: string
 ): Promise<Record<string, ReactionCounts>> {
   const supabase = await createClient();
   const { data } = await supabase
-    .from("match_reactions")
-    .select("match_id, user_id, emoji")
-    .eq("pool_id", poolId);
+    .from("reactions")
+    .select("target_user_id, reactor_id, emoji")
+    .eq("pool_id", poolId)
+    .is("match_id", null);
 
-  const byMatch: Record<string, ReactionCounts> = {};
+  const byTarget: Record<string, ReactionCounts> = {};
   for (const r of data ?? []) {
-    const m = (byMatch[r.match_id] ??= {});
-    const e = (m[r.emoji] ??= { count: 0, mine: false });
+    const t = (byTarget[r.target_user_id] ??= {});
+    const e = (t[r.emoji] ??= { count: 0, mine: false });
     e.count++;
-    if (r.user_id === userId) e.mine = true;
+    if (r.reactor_id === userId) e.mine = true;
   }
-  return byMatch;
+  return byTarget;
 }
 
 /** Classement trié. */

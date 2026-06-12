@@ -312,27 +312,35 @@ create policy "predictions update" on public.predictions for update
   );
 
 -- =====================================================================
---  RÉACTIONS EMOJI sur les matchs (chambrage entre potes)
+--  RÉACTIONS EMOJI (chambrage) — sur un JOUEUR : son prono (match_id) ou
+--  son rang au classement (match_id null).
 -- =====================================================================
-create table if not exists public.match_reactions (
-  match_id   uuid not null references public.matches (id) on delete cascade,
-  user_id    uuid not null references public.profiles (id) on delete cascade,
-  pool_id    uuid not null references public.pools (id) on delete cascade,  -- dénormalisé (RLS + realtime)
-  emoji      text not null,                                                 -- "emoji-1".."emoji-10"
-  created_at timestamptz not null default now(),
-  primary key (match_id, user_id, emoji)
+drop table if exists public.match_reactions;   -- ancienne version (réactions sur match)
+create table if not exists public.reactions (
+  id             uuid primary key default gen_random_uuid(),
+  pool_id        uuid not null references public.pools (id) on delete cascade,
+  reactor_id     uuid not null references public.profiles (id) on delete cascade,   -- qui réagit
+  target_user_id uuid not null references public.profiles (id) on delete cascade,   -- qui se fait chambrer
+  match_id       uuid references public.matches (id) on delete cascade,             -- null = réaction au classement
+  emoji          text not null,                                                     -- "emoji-1".."emoji-10"
+  created_at     timestamptz not null default now()
 );
-alter table public.match_reactions enable row level security;
+-- Unicité (le coalesce gère le match_id null pour les réactions de classement).
+create unique index if not exists reactions_unique on public.reactions (
+  pool_id, reactor_id, target_user_id, emoji,
+  coalesce(match_id, '00000000-0000-0000-0000-000000000000'::uuid)
+);
+alter table public.reactions enable row level security;
 
-drop policy if exists "reactions read" on public.match_reactions;
-create policy "reactions read" on public.match_reactions for select
+drop policy if exists "reactions read" on public.reactions;
+create policy "reactions read" on public.reactions for select
   using (public.is_pool_member(pool_id));
-drop policy if exists "reactions insert" on public.match_reactions;
-create policy "reactions insert" on public.match_reactions for insert
-  with check (user_id = auth.uid() and public.is_pool_member(pool_id));
-drop policy if exists "reactions delete" on public.match_reactions;
-create policy "reactions delete" on public.match_reactions for delete
-  using (user_id = auth.uid());
+drop policy if exists "reactions insert" on public.reactions;
+create policy "reactions insert" on public.reactions for insert
+  with check (reactor_id = auth.uid() and public.is_pool_member(pool_id));
+drop policy if exists "reactions delete" on public.reactions;
+create policy "reactions delete" on public.reactions for delete
+  using (reactor_id = auth.uid());
 
 -- =====================================================================
 --  REALTIME — diffuser matchs (classement/scores en direct) + réactions
@@ -344,7 +352,7 @@ exception when duplicate_object then null;
 end $$;
 do $$
 begin
-  alter publication supabase_realtime add table public.match_reactions;
+  alter publication supabase_realtime add table public.reactions;
 exception when duplicate_object then null;
 end $$;
 

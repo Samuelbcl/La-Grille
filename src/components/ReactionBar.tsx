@@ -7,25 +7,32 @@ import { createClient } from "@/lib/supabase/client";
 import { EMOJIS } from "@/lib/emojis";
 import type { ReactionCounts } from "@/lib/queries";
 
-const SRC: Record<string, { src: string; label: string }> = Object.fromEntries(
-  EMOJIS.map((e) => [e.key, { src: e.src, label: e.label }])
-);
-
-export function MatchReactions({
-  matchId,
+/**
+ * Barre de réactions emoji visant un JOUEUR : son prono (matchId fourni) ou son
+ * rang au classement (matchId omis). Écriture optimiste + temps réel via refresh.
+ */
+export function ReactionBar({
   poolId,
+  targetUserId,
+  matchId = null,
   userId,
   initial,
+  size = "sm",
 }: {
-  matchId: string;
   poolId: string;
+  targetUserId: string;
+  matchId?: string | null;
   userId: string | null;
   initial: ReactionCounts;
+  size?: "sm" | "xs";
 }) {
   const router = useRouter();
   const [counts, setCounts] = useState<ReactionCounts>(initial);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const img = size === "xs" ? "h-3.5 w-3.5" : "h-4 w-4";
+  const btn = size === "xs" ? "h-5 w-5" : "h-6 w-6";
 
   async function toggle(key: string) {
     if (busy) return;
@@ -34,7 +41,6 @@ export function MatchReactions({
     setBusy(true);
     const mine = !!counts[key]?.mine;
 
-    // Mise à jour optimiste (retour immédiat).
     setCounts((c) => {
       const next: ReactionCounts = { ...c };
       const e = { ...(next[key] ?? { count: 0, mine: false }) };
@@ -52,9 +58,19 @@ export function MatchReactions({
 
     const supabase = createClient();
     if (mine) {
-      await supabase.from("match_reactions").delete().match({ match_id: matchId, user_id: userId, emoji: key });
+      let q = supabase
+        .from("reactions")
+        .delete()
+        .eq("pool_id", poolId)
+        .eq("reactor_id", userId)
+        .eq("target_user_id", targetUserId)
+        .eq("emoji", key);
+      q = matchId ? q.eq("match_id", matchId) : q.is("match_id", null);
+      await q;
     } else {
-      await supabase.from("match_reactions").insert({ match_id: matchId, user_id: userId, pool_id: poolId, emoji: key });
+      await supabase
+        .from("reactions")
+        .insert({ pool_id: poolId, reactor_id: userId, target_user_id: targetUserId, match_id: matchId, emoji: key });
     }
     setBusy(false);
     router.refresh();
@@ -63,17 +79,17 @@ export function MatchReactions({
   const active = EMOJIS.filter((e) => (counts[e.key]?.count ?? 0) > 0);
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1">
       {active.map((e) => (
         <button
           key={e.key}
           onClick={() => toggle(e.key)}
-          className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[12px] transition active:scale-95 ${
+          className={`flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[11px] transition active:scale-95 ${
             counts[e.key].mine ? "border-accent text-accent" : "border-border bg-surface-2"
           }`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={e.src} alt={e.label} className="h-4 w-4" />
+          <img src={e.src} alt={e.label} className={img} />
           <span className="tabular-nums font-semibold">{counts[e.key].count}</span>
         </button>
       ))}
@@ -83,12 +99,12 @@ export function MatchReactions({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-label="Réagir"
-          className="grid h-6 w-6 place-items-center rounded-full border border-border bg-surface-2 text-muted active:scale-90 transition"
+          className={`grid ${btn} place-items-center rounded-full border border-border bg-surface-2 text-muted transition active:scale-90`}
         >
-          <SmilePlus size={14} />
+          <SmilePlus size={size === "xs" ? 12 : 14} />
         </button>
         {open && (
-          <div className="absolute bottom-8 left-0 z-20 flex w-[216px] flex-wrap gap-1 rounded-2xl border border-border bg-surface p-2 shadow-float">
+          <div className="absolute bottom-7 left-0 z-30 flex w-[216px] flex-wrap gap-1 rounded-2xl border border-border bg-surface p-2 shadow-float">
             {EMOJIS.map((e) => (
               <button
                 key={e.key}
