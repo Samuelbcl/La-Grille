@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentPool, getMatchesWithPredictions } from "@/lib/queries";
 import { MatchCard } from "@/components/MatchCard";
 import { RealtimeRefresh } from "@/components/RealtimeRefresh";
+import { LiveBanner } from "@/components/LiveBanner";
 import { dayKey } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export default async function CalendrierPage() {
   }
 
   const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
+  const live = matches.filter((m) => m.status === "live");
 
   // Regroupe par jour
   const days = new Map<string, typeof matches>();
@@ -50,6 +52,8 @@ export default async function CalendrierPage() {
         </div>
         <p className="text-[13px] text-muted">Calendrier &amp; résultats</p>
       </header>
+
+      <LiveBanner matches={live} />
 
       <div className="px-4 py-4 space-y-6">
         {matches.length === 0 && (
