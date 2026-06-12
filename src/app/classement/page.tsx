@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentPool, getLeaderboard, getPlayerReactions } from "@/lib/queries";
+import { getCurrentPool, getLeaderboard } from "@/lib/queries";
 import { computeStandings, type MatchForStanding } from "@/lib/standings";
 import { ClassementView, type LbRow } from "@/components/ClassementView";
 import { ShareButton } from "@/components/ShareButton";
@@ -15,13 +15,12 @@ export default async function ClassementPage() {
   }
 
   const supabase = await createClient();
-  const [players, { data: matchRows }, reactions] = await Promise.all([
+  const [players, { data: matchRows }] = await Promise.all([
     getLeaderboard(pool.id) as Promise<LbRow[]>,
     supabase
       .from("matches")
       .select("group_label, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status")
       .eq("pool_id", pool.id),
-    getPlayerReactions(pool.id, pool.user_id as string),
   ]);
 
   const standings = computeStandings((matchRows ?? []) as MatchForStanding[]);
@@ -51,7 +50,6 @@ export default async function ClassementPage() {
         standings={standings}
         me={pool.user_id as string}
         poolId={pool.id as string}
-        reactions={reactions}
       />
     </>
   );

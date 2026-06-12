@@ -68,7 +68,7 @@ export default async function CalendrierPage() {
             </h2>
             <div className="space-y-2.5">
               {list.map((m) => (
-                <MatchCard key={m.id} m={m} userId={pool.user_id} poolId={pool.id} />
+                <MatchCard key={m.id} m={m} userId={pool.user_id} />
               ))}
             </div>
           </section>

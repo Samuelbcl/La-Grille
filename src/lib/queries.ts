@@ -46,31 +46,6 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
   }));
 }
 
-/** Réactions emoji agrégées par joueur ciblé : { targetUserId: { emoji: { count, mine } } }. */
-export type ReactionCounts = Record<string, { count: number; mine: boolean }>;
-
-/** Réactions au CLASSEMENT (match_id null) du pool, par joueur. */
-export async function getPlayerReactions(
-  poolId: string,
-  userId: string
-): Promise<Record<string, ReactionCounts>> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("reactions")
-    .select("target_user_id, reactor_id, emoji")
-    .eq("pool_id", poolId)
-    .is("match_id", null);
-
-  const byTarget: Record<string, ReactionCounts> = {};
-  for (const r of data ?? []) {
-    const t = (byTarget[r.target_user_id] ??= {});
-    const e = (t[r.emoji] ??= { count: 0, mine: false });
-    e.count++;
-    if (r.reactor_id === userId) e.mine = true;
-  }
-  return byTarget;
-}
-
 /** Classement trié. */
 export async function getLeaderboard(poolId: string) {
   const supabase = await createClient();

@@ -119,26 +119,6 @@ export interface Database {
           },
         ];
       };
-      reactions: {
-        Row: {
-          id: string;
-          pool_id: string;
-          reactor_id: string;
-          target_user_id: string;
-          match_id: string | null;
-          emoji: string;
-          created_at: string;
-        };
-        Insert: {
-          pool_id: string;
-          reactor_id: string;
-          target_user_id: string;
-          match_id?: string | null;
-          emoji: string;
-        };
-        Update: { emoji?: string };
-        Relationships: [];
-      };
       predictions: {
         Row: {
           id: string;
