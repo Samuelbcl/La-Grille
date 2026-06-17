@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
-import { BONUS, normalizeAns } from "@/lib/bonus";
+import { BONUS, normalizeAns, looseMatch } from "@/lib/bonus";
 
 type Team = { code: string; name: string };
 
@@ -66,7 +66,8 @@ export function BonusForm({
         const ans = answers[b.key] ?? "";
         const correct = results[b.key];
         const resolved = !!correct;
-        const isRight = resolved && normalizeAns(ans) === normalizeAns(correct);
+        const isRight =
+          resolved && (b.kind === "text" ? looseMatch(ans, correct) : normalizeAns(ans) === normalizeAns(correct));
         return (
           <div key={b.key} className="rounded-2xl border border-border bg-surface p-4 shadow-card">
             <div className="flex items-baseline justify-between gap-2">
@@ -99,12 +100,15 @@ export function BonusForm({
                 ))}
               </select>
             ) : (
-              <input
-                value={ans}
-                onChange={(e) => setAnswers((a) => ({ ...a, [b.key]: e.target.value }))}
-                placeholder="Ex : Mbappé"
-                className="h-12 w-full rounded-2xl border border-border bg-surface-2 px-4 outline-none focus:border-accent"
-              />
+              <>
+                <input
+                  value={ans}
+                  onChange={(e) => setAnswers((a) => ({ ...a, [b.key]: e.target.value }))}
+                  placeholder="Ex : Mbappé"
+                  className="h-12 w-full rounded-2xl border border-border bg-surface-2 px-4 outline-none focus:border-accent"
+                />
+                <p className="mt-1 text-[11px] text-muted">Pas besoin d&apos;une orthographe parfaite 👍</p>
+              </>
             )}
 
             {readOnly && resolved && !isRight && (

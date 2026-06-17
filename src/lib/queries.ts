@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { BONUS, normalizeAns } from "@/lib/bonus";
+import { BONUS, normalizeAns, looseMatch } from "@/lib/bonus";
 
 /** Récupère le 1er pool dont l'utilisateur est membre (MVP = un seul pool). */
 export async function getCurrentPool() {
@@ -113,14 +113,16 @@ async function getBonusPointsByUser(poolId: string): Promise<Record<string, numb
     supabase.from("bonus_answers").select("user_id, question_key, answer").eq("pool_id", poolId),
     supabase.from("bonus_results").select("question_key, answer").eq("pool_id", poolId),
   ]);
-  const correct = new Map((results ?? []).map((r) => [r.question_key, normalizeAns(r.answer)]));
-  const ptsOf = new Map<string, number>(BONUS.map((b) => [b.key, b.points]));
+  const correctRaw = new Map((results ?? []).map((r) => [r.question_key, r.answer]));
+  const qByKey = new Map(BONUS.map((b) => [b.key as string, b]));
   const pts: Record<string, number> = {};
   for (const a of answers ?? []) {
-    const right = correct.get(a.question_key);
-    if (right && normalizeAns(a.answer) === right) {
-      pts[a.user_id] = (pts[a.user_id] ?? 0) + (ptsOf.get(a.question_key) ?? 0);
-    }
+    const q = qByKey.get(a.question_key);
+    const right = correctRaw.get(a.question_key);
+    if (!q || right == null) continue;
+    // Buteur : tolérant aux fautes ; équipes : code exact.
+    const ok = q.kind === "text" ? looseMatch(a.answer, right) : normalizeAns(a.answer) === normalizeAns(right);
+    if (ok) pts[a.user_id] = (pts[a.user_id] ?? 0) + q.points;
   }
   return pts;
 }
