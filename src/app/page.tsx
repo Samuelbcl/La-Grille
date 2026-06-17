@@ -32,13 +32,30 @@ export default async function CalendrierPage() {
   const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
   const live = matches.filter((m) => m.status === "live");
 
-  // Regroupe par jour
-  const days = new Map<string, typeof matches>();
+  // Regroupe par jour, puis ordonne : Aujourd'hui → à venir → passés (récents d'abord),
+  // pour qu'on voie direct les matchs du jour en haut sans scroller.
+  const groups = new Map<number, { kickoff: string; list: typeof matches }>();
+  const dayStart = (iso: string) => {
+    const d = new Date(iso);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  };
   for (const m of matches) {
-    const k = dayKey(m.kickoff);
-    if (!days.has(k)) days.set(k, []);
-    days.get(k)!.push(m);
+    const k = dayStart(m.kickoff);
+    if (!groups.has(k)) groups.set(k, { kickoff: m.kickoff, list: [] });
+    groups.get(k)!.list.push(m);
   }
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const tomorrowStart = todayStart + 86_400_000;
+
+  const all = [...groups.entries()].map(([day, g]) => ({ day, ...g }));
+  const ordered = [
+    ...all.filter((g) => g.day === todayStart),
+    ...all.filter((g) => g.day > todayStart).sort((a, b) => a.day - b.day),
+    ...all.filter((g) => g.day < todayStart).sort((a, b) => b.day - a.day),
+  ];
+  const labelFor = (g: { day: number; kickoff: string }) =>
+    g.day === todayStart ? "Aujourd'hui" : g.day === tomorrowStart ? "Demain" : dayKey(g.kickoff);
 
   return (
     <>
@@ -61,18 +78,25 @@ export default async function CalendrierPage() {
             Aucun match pour l&apos;instant. L&apos;organisateur peut les charger dans <b>Groupe</b>.
           </p>
         )}
-        {[...days.entries()].map(([day, list]) => (
-          <section key={day}>
-            <h2 className="px-1 mb-2 text-[13px] font-semibold uppercase tracking-wide text-muted">
-              {day}
-            </h2>
-            <div className="space-y-2.5">
-              {list.map((m) => (
-                <MatchCard key={m.id} m={m} userId={pool.user_id} />
-              ))}
-            </div>
-          </section>
-        ))}
+        {ordered.map((g) => {
+          const today = g.day === todayStart;
+          return (
+            <section key={g.day}>
+              <h2
+                className={`px-1 mb-2 text-[13px] font-bold uppercase tracking-wide ${
+                  today ? "text-accent" : "text-muted"
+                }`}
+              >
+                {labelFor(g)}
+              </h2>
+              <div className="space-y-2.5">
+                {g.list.map((m) => (
+                  <MatchCard key={m.id} m={m} userId={pool.user_id} />
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
         {matches.length > 0 && !matches.some((m) => m.stage !== "group") && (
           <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-5 text-center">

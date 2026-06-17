@@ -34,6 +34,10 @@ function PodiumSpot({ row, place, me }: { row: LbRow; place: 1 | 2 | 3; me: bool
       />
       <p className="mt-1.5 max-w-full truncate px-1 text-[13px] font-semibold">{row.display_name}</p>
       <p className="text-[12px] font-bold tabular-nums text-accent">{row.total_points} pts</p>
+      <p className="mt-0.5 text-center text-[10px] leading-tight text-muted tabular-nums">
+        {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
+        {row.correct_count > 1 ? "s" : ""}
+      </p>
       <div className={`mt-2 grid w-full ${ped} place-items-end justify-center rounded-t-xl border border-b-0 border-border bg-surface-2`}>
         <span className="pb-1 text-lg font-bold text-muted">{place}</span>
       </div>
