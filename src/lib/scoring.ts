@@ -9,6 +9,9 @@
  */
 export const POINTS = { exact: 7, outcome: 2 };
 
+/** Nombre de jokers (×2 sur un match) par joueur pour tout le tournoi. */
+export const JOKERS_MAX = 2;
+
 const sign = (n: number) => (n > 0 ? 1 : n < 0 ? -1 : 0);
 
 export function computePoints(

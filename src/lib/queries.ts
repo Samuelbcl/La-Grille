@@ -34,7 +34,7 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
   // Les deux requêtes en parallèle (au lieu de l'une après l'autre) → 1 aller-retour gagné.
   const [{ data: matches }, { data: preds }] = await Promise.all([
     supabase.from("matches").select("*").eq("pool_id", poolId).order("kickoff", { ascending: true }),
-    supabase.from("predictions").select("match_id, pred_a, pred_b").eq("user_id", userId),
+    supabase.from("predictions").select("match_id, pred_a, pred_b, joker").eq("user_id", userId),
   ]);
 
   const byMatch = new Map((preds ?? []).map((p) => [p.match_id, p]));
@@ -43,6 +43,7 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
     ...m,
     pred_a: byMatch.get(m.id)?.pred_a ?? null,
     pred_b: byMatch.get(m.id)?.pred_b ?? null,
+    joker: byMatch.get(m.id)?.joker ?? false,
   }));
 }
 

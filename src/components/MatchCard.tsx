@@ -26,16 +26,19 @@ export interface MatchCardData {
   status: string;
   pred_a?: number | null;
   pred_b?: number | null;
+  joker?: boolean;
 }
 
 export function MatchCard({
   m,
   userId,
   editable = false,
+  jokersLeft = 0,
 }: {
   m: MatchCardData;
   userId: string | null;
   editable?: boolean;
+  jokersLeft?: number;
 }) {
   const router = useRouter();
   const locked = new Date(m.kickoff) <= new Date();
@@ -46,6 +49,7 @@ export function MatchCard({
   const [predA, setPredA] = useState<number | null>(m.pred_a ?? null);
   const [predB, setPredB] = useState<number | null>(m.pred_b ?? null);
   const hasPred = predA != null && predB != null;
+  const [joker, setJoker] = useState(m.joker ?? false);
 
   // Édition inline.
   const [editing, setEditing] = useState(false);
@@ -143,13 +147,29 @@ export function MatchCard({
     router.refresh(); // met à jour le compteur "à pronostiquer" et le classement
   }
 
+  async function toggleJoker() {
+    if (!userId) return router.push("/login");
+    const next = !joker;
+    if (next && jokersLeft <= 0) return; // plus de jokers disponibles
+    setJoker(next);
+    const supabase = createClient();
+    const { error: e } = await supabase
+      .from("predictions")
+      .update({ joker: next })
+      .eq("match_id", m.id)
+      .eq("user_id", userId);
+    if (e) return setJoker(!next); // rollback si échec (ex. coup d'envoi passé)
+    router.refresh();
+  }
+
+  const mult = joker ? 2 : 1;
   const outcome =
     finished && hasPred ? outcomeOf(predA!, predB!, m.score_a, m.score_b) : "pending";
   const badge =
     outcome === "exact"
-      ? { text: `Score exact +${POINTS.exact}`, cls: "text-success" }
+      ? { text: `${joker ? "🃏 " : ""}Score exact +${POINTS.exact * mult}`, cls: "text-success" }
       : outcome === "correct"
-        ? { text: `Bon vainqueur +${POINTS.outcome}`, cls: "text-accent" }
+        ? { text: `${joker ? "🃏 " : ""}Bon vainqueur +${POINTS.outcome * mult}`, cls: "text-accent" }
         : outcome === "wrong"
           ? { text: "Raté", cls: "text-muted" }
           : null;
@@ -195,9 +215,22 @@ export function MatchCard({
           <div className="h-px bg-border my-2" />
           <Row name={m.team_b} code={m.team_b_code} score={editable ? predB : m.score_b} />
 
+          {editable && hasPred && state === "upcoming" && (
+            <button
+              onClick={toggleJoker}
+              disabled={!joker && jokersLeft <= 0}
+              className={`mt-3 flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-semibold transition active:scale-95 disabled:opacity-40 ${
+                joker ? "border-warning text-warning" : "border-border text-muted"
+              }`}
+            >
+              🃏 {joker ? "Joker ×2 activé — retirer" : "Jouer un joker ×2"}
+            </button>
+          )}
+
           {!editable && hasPred && (
             <div className="mt-3 text-[11px] text-muted">
               Ton prono : <span className="text-text font-semibold">{predA} – {predB}</span>
+              {joker && <span className="ml-1 font-semibold text-warning">· 🃏 ×2</span>}
             </div>
           )}
           {badge && <div className={`mt-1 text-[11px] font-semibold ${badge.cls}`}>{badge.text}</div>}

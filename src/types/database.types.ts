@@ -126,11 +126,12 @@ export interface Database {
           user_id: string;
           pred_a: number;
           pred_b: number;
+          joker: boolean;
           created_at: string;
           updated_at: string;
         };
-        Insert: { match_id: string; user_id: string; pred_a: number; pred_b: number };
-        Update: { pred_a?: number; pred_b?: number };
+        Insert: { match_id: string; user_id: string; pred_a: number; pred_b: number; joker?: boolean };
+        Update: { pred_a?: number; pred_b?: number; joker?: boolean };
         Relationships: [
           {
             foreignKeyName: "predictions_match_id_fkey";

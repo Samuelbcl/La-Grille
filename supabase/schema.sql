@@ -73,10 +73,13 @@ create table if not exists public.predictions (
   user_id    uuid not null references public.profiles (id) on delete cascade,
   pred_a     integer not null check (pred_a >= 0 and pred_a <= 30),
   pred_b     integer not null check (pred_b >= 0 and pred_b <= 30),
+  joker      boolean not null default false,            -- carte joker : double les points de ce match
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (match_id, user_id)
 );
+-- Ajout idempotent (bases déjà créées).
+alter table public.predictions add column if not exists joker boolean not null default false;
 
 -- =====================================================================
 --  CALCUL DES POINTS — barème « La Grille » (cf. docs/REGLEMENT.md)
@@ -121,8 +124,10 @@ select
   m.status,
   -- Les points ne comptent QUE pour un match TERMINÉ (sinon un 0-0 au coup
   -- d'envoi donnerait des points provisoires aux pronos « match nul »).
+  -- Le joker double les points du match.
   case when m.status = 'finished'
        then public.compute_points(p.pred_a, p.pred_b, m.score_a, m.score_b, m.stage)
+            * (case when p.joker then 2 else 1 end)
        else 0 end as points,
   (m.status = 'finished' and p.pred_a = m.score_a and p.pred_b = m.score_b) as is_exact
 from public.predictions p
