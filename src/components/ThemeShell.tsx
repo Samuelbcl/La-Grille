@@ -10,7 +10,7 @@ export const THEME_EVENT = "lagrille:themechange";
 /** Page -> thème par défaut (fond + couleurs). Voir globals.css [data-theme]. */
 function themeFor(path: string): string {
   if (path === "/") return "calendrier";
-  if (path.startsWith("/pronos")) return "pronos";
+  if (path.startsWith("/pronos") || path.startsWith("/bonus")) return "pronos";
   if (path.startsWith("/classement")) return "classement";
   if (path.startsWith("/admin")) return "groupe";
   if (path.startsWith("/profil")) return "profil";

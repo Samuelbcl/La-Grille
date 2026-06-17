@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar } from "@/components/Avatar";
 import { SEED_MATCHES } from "@/data/matches";
+import { BonusAdmin } from "@/components/BonusAdmin";
 import { Copy, Check } from "lucide-react";
 
 type Pool = {
@@ -258,6 +259,9 @@ export default function AdminPage() {
               </p>
             </Card>
           )}
+
+          {/* Réponses des pronos bonus */}
+          <BonusAdmin poolId={pool.id} />
 
           {/* Zone de danger : supprimer le groupe */}
           <Card className="p-5 space-y-3">

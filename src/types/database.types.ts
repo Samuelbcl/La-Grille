@@ -52,10 +52,11 @@ export interface Database {
           user_id: string;
           is_admin: boolean;
           has_paid: boolean;
+          bonus_validated: boolean;
           joined_at: string;
         };
         Insert: { pool_id: string; user_id: string; is_admin?: boolean; has_paid?: boolean };
-        Update: { is_admin?: boolean; has_paid?: boolean };
+        Update: { is_admin?: boolean; has_paid?: boolean; bonus_validated?: boolean };
         Relationships: [
           {
             foreignKeyName: "pool_members_pool_id_fkey";
@@ -118,6 +119,18 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      bonus_answers: {
+        Row: { pool_id: string; user_id: string; question_key: string; answer: string; created_at: string };
+        Insert: { pool_id: string; user_id: string; question_key: string; answer: string };
+        Update: { answer?: string };
+        Relationships: [];
+      };
+      bonus_results: {
+        Row: { pool_id: string; question_key: string; answer: string };
+        Insert: { pool_id: string; question_key: string; answer: string };
+        Update: { answer?: string };
+        Relationships: [];
       };
       predictions: {
         Row: {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentPool, getLeaderboard } from "@/lib/queries";
+import { getCurrentPool, getLeaderboardWithBonus } from "@/lib/queries";
 import { SignOutButton } from "@/components/SignOutButton";
 import { Avatar } from "@/components/Avatar";
 import { AvatarPicker } from "@/components/AvatarPicker";
@@ -42,7 +42,7 @@ export default async function ProfilPage() {
   // Stats depuis le classement
   let stats = { points: 0, rank: 0, exact: 0, correct: 0, played: 0 };
   if (pool && user) {
-    const rows = (await getLeaderboard(pool.id)) as Array<{
+    const rows = (await getLeaderboardWithBonus(pool.id)) as Array<{
       user_id: string;
       total_points: number;
       exact_count: number;

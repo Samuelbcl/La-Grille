@@ -17,6 +17,7 @@ export type LbRow = {
   exact_count: number;
   correct_count: number;
   played_count: number;
+  bonus_points?: number;
 };
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -37,6 +38,7 @@ function PodiumSpot({ row, place, me }: { row: LbRow; place: 1 | 2 | 3; me: bool
       <p className="mt-0.5 text-center text-[10px] leading-tight text-muted tabular-nums">
         {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
         {row.correct_count > 1 ? "s" : ""}
+        {row.bonus_points ? <span className="text-warning"> · 🎯+{row.bonus_points}</span> : null}
       </p>
       <div className={`mt-2 grid w-full ${ped} place-items-end justify-center rounded-t-xl border border-b-0 border-border bg-surface-2`}>
         <span className="pb-1 text-lg font-bold text-muted">{place}</span>
@@ -58,6 +60,7 @@ function RankRow({ row, rank, me }: { row: LbRow; rank: number; me: boolean }) {
         <p className="text-[12px] text-muted">
           {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
           {row.correct_count > 1 ? "s" : ""}
+          {row.bonus_points ? <span className="text-warning"> · 🎯+{row.bonus_points}</span> : null}
         </p>
       </div>
       <span className="text-lg font-bold tabular-nums">{row.total_points}</span>
@@ -153,6 +156,11 @@ export function ClassementView({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "matches", filter: `pool_id=eq.${poolId}` },
+        () => router.refresh()
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bonus_results", filter: `pool_id=eq.${poolId}` },
         () => router.refresh()
       )
       .subscribe();

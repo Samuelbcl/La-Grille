@@ -38,9 +38,11 @@ create table if not exists public.pool_members (
   user_id   uuid not null references public.profiles (id) on delete cascade,
   is_admin  boolean not null default false,             -- peut saisir les résultats réels
   has_paid  boolean not null default false,             -- a réglé sa mise de 10 €
+  bonus_validated boolean not null default false,       -- a verrouillé ses pronos bonus
   joined_at timestamptz not null default now(),
   primary key (pool_id, user_id)
 );
+alter table public.pool_members add column if not exists bonus_validated boolean not null default false;
 
 -- ---------------------------------------------------------------------
 -- 4. MATCHS
@@ -317,11 +319,63 @@ create policy "predictions update" on public.predictions for update
   );
 
 -- =====================================================================
+--  PRONOS BONUS de tournoi (gros points en phase finale)
+--  Questions fixes (vainqueur, finaliste, meilleur buteur) définies côté app.
+-- =====================================================================
+-- Réponses des joueurs (1 par question).
+create table if not exists public.bonus_answers (
+  pool_id      uuid not null references public.pools (id) on delete cascade,
+  user_id      uuid not null references public.profiles (id) on delete cascade,
+  question_key text not null,                 -- 'winner' | 'runnerup' | 'topscorer'
+  answer       text not null,                 -- code équipe ou nom (selon la question)
+  created_at   timestamptz not null default now(),
+  primary key (pool_id, user_id, question_key)
+);
+alter table public.bonus_answers enable row level security;
+-- Lisible par les membres (pour le calcul du classement). Écriture : soi-même,
+-- membre, et seulement TANT QUE pas encore validé (verrouillage serveur).
+drop policy if exists "bonus answers read" on public.bonus_answers;
+create policy "bonus answers read" on public.bonus_answers for select
+  using (public.is_pool_member(pool_id));
+drop policy if exists "bonus answers write" on public.bonus_answers;
+create policy "bonus answers write" on public.bonus_answers for all
+  using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and public.is_pool_member(pool_id)
+    and not exists (
+      select 1 from public.pool_members pm
+      where pm.pool_id = bonus_answers.pool_id and pm.user_id = auth.uid() and pm.bonus_validated
+    )
+  );
+
+-- Bonnes réponses, saisies par l'organisateur quand elles sont connues.
+create table if not exists public.bonus_results (
+  pool_id      uuid not null references public.pools (id) on delete cascade,
+  question_key text not null,
+  answer       text not null,
+  primary key (pool_id, question_key)
+);
+alter table public.bonus_results enable row level security;
+drop policy if exists "bonus results read" on public.bonus_results;
+create policy "bonus results read" on public.bonus_results for select
+  using (public.is_pool_member(pool_id));
+drop policy if exists "bonus results write" on public.bonus_results;
+create policy "bonus results write" on public.bonus_results for all
+  using (public.is_pool_admin(pool_id))
+  with check (public.is_pool_admin(pool_id));
+
+-- =====================================================================
 --  REALTIME — diffuser les changements de matchs (classement en direct)
 -- =====================================================================
 do $$
 begin
   alter publication supabase_realtime add table public.matches;
+exception when duplicate_object then null;
+end $$;
+do $$
+begin
+  alter publication supabase_realtime add table public.bonus_results;
 exception when duplicate_object then null;
 end $$;
 
