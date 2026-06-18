@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { getCurrentPool, getMatchesWithPredictions } from "@/lib/queries";
-import { MatchCard } from "@/components/MatchCard";
 import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { LiveBanner } from "@/components/LiveBanner";
+import { CalendarView, type CalDay } from "@/components/CalendarView";
 import { dayKey } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,30 +32,43 @@ export default async function CalendrierPage() {
   const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
   const live = matches.filter((m) => m.status === "live");
 
-  // Regroupe par jour, puis ordonne : Aujourd'hui → à venir → passés (récents d'abord),
-  // pour qu'on voie direct les matchs du jour en haut sans scroller.
-  const groups = new Map<number, { kickoff: string; list: typeof matches }>();
+  // Regroupe par jour (minuit local) pour la barre de jours.
   const dayStart = (iso: string) => {
     const d = new Date(iso);
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   };
+  const groups = new Map<number, typeof matches>();
   for (const m of matches) {
     const k = dayStart(m.kickoff);
-    if (!groups.has(k)) groups.set(k, { kickoff: m.kickoff, list: [] });
-    groups.get(k)!.list.push(m);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(m);
   }
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const tomorrowStart = todayStart + 86_400_000;
 
-  const all = [...groups.entries()].map(([day, g]) => ({ day, ...g }));
-  const ordered = [
-    ...all.filter((g) => g.day === todayStart),
-    ...all.filter((g) => g.day > todayStart).sort((a, b) => a.day - b.day),
-    ...all.filter((g) => g.day < todayStart).sort((a, b) => b.day - a.day),
-  ];
-  const labelFor = (g: { day: number; kickoff: string }) =>
-    g.day === todayStart ? "Aujourd'hui" : g.day === tomorrowStart ? "Demain" : dayKey(g.kickoff);
+  const days: CalDay[] = [...groups.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([day, list]) => {
+      const d0 = new Date(list[0].kickoff);
+      const isToday = day === todayStart;
+      const wd = d0.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
+      return {
+        day,
+        isToday,
+        chipTop: isToday ? "Auj." : wd,
+        chipBottom: d0.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+        title: isToday ? "Aujourd'hui" : day === tomorrowStart ? "Demain" : dayKey(list[0].kickoff),
+        matches: list,
+      };
+    });
+
+  // Jour par défaut : aujourd'hui, sinon le prochain à venir, sinon le dernier.
+  const defaultDay =
+    days.find((d) => d.day === todayStart)?.day ??
+    days.find((d) => d.day > todayStart)?.day ??
+    days[days.length - 1]?.day ??
+    0;
 
   return (
     <>
@@ -72,43 +85,24 @@ export default async function CalendrierPage() {
 
       <LiveBanner matches={live} />
 
-      <div className="px-4 py-4 space-y-6">
-        {matches.length === 0 && (
-          <p className="text-center text-muted pt-16">
-            Aucun match pour l&apos;instant. L&apos;organisateur peut les charger dans <b>Groupe</b>.
-          </p>
-        )}
-        {ordered.map((g) => {
-          const today = g.day === todayStart;
-          return (
-            <section key={g.day}>
-              <h2
-                className={`px-1 mb-2 text-[13px] font-bold uppercase tracking-wide ${
-                  today ? "text-accent" : "text-muted"
-                }`}
-              >
-                {labelFor(g)}
-              </h2>
-              <div className="space-y-2.5">
-                {g.list.map((m) => (
-                  <MatchCard key={m.id} m={m} userId={pool.user_id} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+      {days.length === 0 ? (
+        <p className="px-4 pt-16 text-center text-muted">
+          Aucun match pour l&apos;instant. L&apos;organisateur peut les charger dans <b>Groupe</b>.
+        </p>
+      ) : (
+        <CalendarView days={days} userId={pool.user_id} defaultDay={defaultDay} />
+      )}
 
-        {matches.length > 0 && !matches.some((m) => m.stage !== "group") && (
-          <div className="rounded-2xl border border-dashed border-border bg-surface-2 p-5 text-center">
-            <div className="mb-1 text-3xl">🏆</div>
-            <p className="font-semibold">Phase finale — bientôt</p>
-            <p className="mt-0.5 text-[13px] text-muted">
-              16es de finale → finale. Les affiches apparaîtront ici <b>automatiquement</b> dès la fin
-              des poules.
-            </p>
-          </div>
-        )}
-      </div>
+      {matches.length > 0 && !matches.some((m) => m.stage !== "group") && (
+        <div className="mx-4 mb-4 rounded-2xl border border-dashed border-border bg-surface-2 p-5 text-center">
+          <div className="mb-1 text-3xl">🏆</div>
+          <p className="font-semibold">Phase finale — bientôt</p>
+          <p className="mt-0.5 text-[13px] text-muted">
+            16es de finale → finale. Les affiches apparaîtront ici <b>automatiquement</b> dès la fin
+            des poules.
+          </p>
+        </div>
+      )}
     </>
   );
 }
