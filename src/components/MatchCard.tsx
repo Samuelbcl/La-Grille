@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Users } from "lucide-react";
-import { formatKickoff, matchState } from "@/lib/utils";
+import { formatKickoff } from "@/lib/utils";
 import { computePoints, outcomeOf, POINTS } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,18 @@ export function MatchCard({
   jokersLeft?: number;
 }) {
   const router = useRouter();
-  const locked = new Date(m.kickoff) <= new Date();
+  const kickoffTs = new Date(m.kickoff).getTime();
+  const [nowTs, setNowTs] = useState(() => Date.now());
+  // Verrouille pile au coup d'envoi, même si la page reste ouverte sur le tel.
+  useEffect(() => {
+    const delay = kickoffTs - nowTs;
+    if (delay <= 0 || delay > 12 * 3_600_000) return;
+    const t = setTimeout(() => setNowTs(Date.now()), delay + 500);
+    return () => clearTimeout(t);
+  }, [kickoffTs, nowTs]);
+  const locked = nowTs >= kickoffTs;
   const finished = m.status === "finished";
-  const state = matchState(m.kickoff, m.status);
+  const state: "upcoming" | "live" | "finished" = finished ? "finished" : locked ? "live" : "upcoming";
 
   // Prono enregistré (état local → retour instantané après "Valider").
   const [predA, setPredA] = useState<number | null>(m.pred_a ?? null);
@@ -53,6 +62,10 @@ export function MatchCard({
 
   // Édition inline.
   const [editing, setEditing] = useState(false);
+  // Si le match démarre pendant qu'on édite : on ferme l'éditeur d'office.
+  useEffect(() => {
+    if (locked && editing) setEditing(false);
+  }, [locked, editing]);
   const [a, setA] = useState(predA ?? 0);
   const [b, setB] = useState(predB ?? 0);
   const [saving, setSaving] = useState(false);

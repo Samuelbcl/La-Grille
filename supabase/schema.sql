@@ -181,6 +181,30 @@ create trigger trg_predictions_touch
   before update on public.predictions
   for each row execute function public.touch_updated_at();
 
+-- Garde-fou : 2 jokers maximum par joueur et par pool (impossible de tricher).
+create or replace function public.check_joker_limit()
+returns trigger language plpgsql as $$
+declare
+  v_pool uuid;
+  v_count int;
+begin
+  if new.joker is not true then return new; end if;
+  select pool_id into v_pool from public.matches where id = new.match_id;
+  select count(*) into v_count
+  from public.predictions p
+  join public.matches m on m.id = p.match_id
+  where p.user_id = new.user_id and m.pool_id = v_pool and p.joker = true and p.id <> new.id;
+  if v_count >= 2 then
+    raise exception 'Limite de jokers atteinte (2 maximum).';
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists trg_joker_limit on public.predictions;
+create trigger trg_joker_limit
+  before insert or update on public.predictions
+  for each row execute function public.check_joker_limit();
+
 -- =====================================================================
 --  ROW LEVEL SECURITY (sécurité : chacun ne touche que ce qu'il doit)
 -- =====================================================================
