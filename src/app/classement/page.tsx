@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentPool, getLeaderboardWithBonus } from "@/lib/queries";
 import { computeStandings, type MatchForStanding } from "@/lib/standings";
 import { ClassementView, type LbRow } from "@/components/ClassementView";
+import type { BracketMatch } from "@/components/BracketView";
 import { ShareButton } from "@/components/ShareButton";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +20,13 @@ export default async function ClassementPage() {
     getLeaderboardWithBonus(pool.id) as Promise<LbRow[]>,
     supabase
       .from("matches")
-      .select("group_label, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status")
+      .select("stage, match_no, group_label, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff")
       .eq("pool_id", pool.id),
   ]);
 
-  const standings = computeStandings((matchRows ?? []) as MatchForStanding[]);
+  const rows = matchRows ?? [];
+  const standings = computeStandings(rows as MatchForStanding[]);
+  const bracket = (rows as BracketMatch[]).filter((m) => m.stage && m.stage !== "group");
 
   const shareText =
     `🏆 ${pool.name} — La Grille\n` +
@@ -50,6 +53,7 @@ export default async function ClassementPage() {
         standings={standings}
         me={pool.user_id as string}
         poolId={pool.id as string}
+        bracket={bracket}
       />
     </>
   );

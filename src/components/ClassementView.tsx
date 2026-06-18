@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
+import { BracketView, type BracketMatch } from "@/components/BracketView";
 import type { TeamStanding } from "@/lib/standings";
 
 export type LbRow = {
@@ -138,13 +139,16 @@ export function ClassementView({
   standings,
   me,
   poolId,
+  bracket,
 }: {
   players: LbRow[];
   standings: Record<string, TeamStanding[]>;
   me: string;
   poolId: string;
+  bracket: BracketMatch[];
 }) {
   const router = useRouter();
+  const koExists = bracket.length > 0;
   const [tab, setTab] = useState<"players" | "groups">("players");
   const groupLabels = Object.keys(standings).sort();
 
@@ -188,12 +192,14 @@ export function ClassementView({
             tab === "groups" ? "bg-accent text-accent-fg shadow-card" : "text-muted"
           )}
         >
-          Poules
+          {koExists ? "Tableau" : "Poules"}
         </button>
       </div>
 
       {tab === "players" ? (
         <Players rows={players} me={me} />
+      ) : koExists ? (
+        <BracketView matches={bracket} />
       ) : groupLabels.length === 0 ? (
         <p className="pt-12 text-center text-muted">Importe les matchs pour voir les poules.</p>
       ) : (
