@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { MatchCard, type MatchCardData } from "@/components/MatchCard";
 
 export type CalDay = {
-  day: number; // minuit local (timestamp) — sert de clé/sélection
+  day: string; // identifiant de jour "AAAA-MM-JJ" (Paris) — clé/sélection
   chipTop: string; // "Auj." ou "ven"
   chipBottom: string; // "19/06"
   title: string; // "Aujourd'hui" / "Demain" / "vendredi 19 juin"
@@ -20,7 +20,7 @@ export function CalendarView({
 }: {
   days: CalDay[];
   userId: string | null;
-  defaultDay: number;
+  defaultDay: string;
 }) {
   const [selected, setSelected] = useState(defaultDay);
   const stripRef = useRef<HTMLDivElement>(null);

@@ -3,7 +3,7 @@ import { getCurrentPool, getMatchesWithPredictions } from "@/lib/queries";
 import { RealtimeRefresh } from "@/components/RealtimeRefresh";
 import { LiveBanner } from "@/components/LiveBanner";
 import { CalendarView, type CalDay } from "@/components/CalendarView";
-import { dayKey } from "@/lib/utils";
+import { dayKey, dayId, todayId, chipWeekday, chipDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -32,43 +32,36 @@ export default async function CalendrierPage() {
   const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
   const live = matches.filter((m) => m.status === "live");
 
-  // Regroupe par jour (minuit local) pour la barre de jours.
-  const dayStart = (iso: string) => {
-    const d = new Date(iso);
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  };
-  const groups = new Map<number, typeof matches>();
+  // Regroupe par jour (heure de Paris) pour la barre de jours.
+  const groups = new Map<string, typeof matches>();
   for (const m of matches) {
-    const k = dayStart(m.kickoff);
+    const k = dayId(m.kickoff);
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k)!.push(m);
   }
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const tomorrowStart = todayStart + 86_400_000;
+  const today = todayId();
+  const tomorrow = dayId(new Date(Date.now() + 86_400_000).toISOString());
 
   const days: CalDay[] = [...groups.entries()]
-    .sort((a, b) => a[0] - b[0])
+    .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([day, list]) => {
-      const d0 = new Date(list[0].kickoff);
-      const isToday = day === todayStart;
-      const wd = d0.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "");
+      const isToday = day === today;
       return {
         day,
         isToday,
-        chipTop: isToday ? "Auj." : wd,
-        chipBottom: d0.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
-        title: isToday ? "Aujourd'hui" : day === tomorrowStart ? "Demain" : dayKey(list[0].kickoff),
+        chipTop: isToday ? "Auj." : chipWeekday(list[0].kickoff),
+        chipBottom: chipDate(list[0].kickoff),
+        title: isToday ? "Aujourd'hui" : day === tomorrow ? "Demain" : dayKey(list[0].kickoff),
         matches: list,
       };
     });
 
   // Jour par défaut : aujourd'hui, sinon le prochain à venir, sinon le dernier.
   const defaultDay =
-    days.find((d) => d.day === todayStart)?.day ??
-    days.find((d) => d.day > todayStart)?.day ??
+    days.find((d) => d.day === today)?.day ??
+    days.find((d) => d.day > today)?.day ??
     days[days.length - 1]?.day ??
-    0;
+    "";
 
   return (
     <>
