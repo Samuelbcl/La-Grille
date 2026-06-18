@@ -12,7 +12,7 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;font-family:-apple-system,"SF Pro Display","Segoe UI",sans-serif;color:var(--text);
-    background:radial-gradient(120% 80% at 50% 0%,#16306f 0%,var(--navy) 55%,#060c1f 100%);min-height:100vh}
+    background:radial-gradient(120% 70% at 50% 0%,#16306f 0%,var(--navy) 55%,#060c1f 100%);min-height:100vh}
   header{text-align:center;padding:24px 16px 6px}
   .kicker{letter-spacing:.24em;font-size:11px;color:var(--gold);font-weight:800;text-transform:uppercase}
   h1{margin:4px 0 0;font-size:30px;font-weight:900;letter-spacing:.02em}
@@ -20,49 +20,45 @@
 
   .scroller{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:18px 16px 8px}
   .scroller::-webkit-scrollbar{height:0}
-  .bracket{display:flex;align-items:center;gap:30px;min-width:max-content;margin:0 auto;width:max-content}
+  .bracket{display:flex;align-items:center;gap:26px;min-width:max-content;width:max-content;margin:0 auto}
+  .side{display:flex;align-items:stretch;gap:26px}
+  .col{display:flex;flex-direction:column;justify-content:space-around;gap:12px}
+  .col .rh{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);text-align:center;margin-bottom:2px}
 
-  .side{display:flex;align-items:stretch;gap:30px}
-  .col{display:flex;flex-direction:column;justify-content:space-around;gap:16px}
-
-  /* carte de match : 2 équipes empilées */
-  .m{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:7px 9px;backdrop-filter:blur(8px);min-width:118px}
+  .m{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:6px 8px;backdrop-filter:blur(8px);min-width:120px}
   .m.final{border-color:var(--gold);background:linear-gradient(135deg,rgba(245,197,66,.14),rgba(245,197,66,.03))}
-  .t{display:flex;align-items:center;gap:8px;padding:3px 0}
-  .fl{width:26px;height:26px;border-radius:50%;overflow:hidden;flex:none;border:2px solid rgba(255,255,255,.25)}
+  .dt{font-size:9px;color:var(--muted);text-align:center;margin-bottom:3px;letter-spacing:.03em;font-variant-numeric:tabular-nums}
+  .t{display:flex;align-items:center;gap:7px;padding:2px 0}
+  .fl{width:24px;height:24px;border-radius:50%;overflow:hidden;flex:none;border:2px solid rgba(255,255,255,.25)}
   .t.w .fl{border-color:var(--gold)}
   .fl img{width:100%;height:100%;object-fit:cover;display:block}
-  .t .c{flex:1;font-size:13px;font-weight:700;letter-spacing:.02em}
-  .t .s{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
-  .t.w .c{color:var(--win)}
-  .t.w .s{color:var(--win)}
+  .t .c{flex:1;font-size:12px;font-weight:700;letter-spacing:.02em}
+  .t .s{font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .t.w .c,.t.w .s{color:var(--win)}
   .t.l{opacity:.45}
 
-  /* connecteurs en "]" (gauche) et "[" (droite) */
-  .pair{position:relative;display:flex;flex-direction:column;justify-content:space-around;gap:16px}
-  .side.left .pair::after{content:"";position:absolute;right:-15px;top:25%;bottom:25%;width:13px;
-    border:2px solid var(--line);border-left:0;border-radius:0 9px 9px 0}
-  .side.right .pair::after{content:"";position:absolute;left:-15px;top:25%;bottom:25%;width:13px;
-    border:2px solid var(--line);border-right:0;border-radius:9px 0 0 9px}
+  .pair{position:relative;display:flex;flex-direction:column;justify-content:space-around;gap:12px}
+  .side.left .pair::after{content:"";position:absolute;right:-13px;top:25%;bottom:25%;width:11px;
+    border:2px solid var(--line);border-left:0;border-radius:0 8px 8px 0}
+  .side.right .pair::after{content:"";position:absolute;left:-13px;top:25%;bottom:25%;width:11px;
+    border:2px solid var(--line);border-right:0;border-radius:8px 0 0 8px}
 
-  /* centre : champion + trophée + finalistes */
-  .center{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:200px}
+  .center{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:190px}
   .champ{border:1.5px solid var(--gold);border-radius:18px;padding:12px 18px;display:flex;align-items:center;gap:10px;
     background:linear-gradient(135deg,rgba(245,197,66,.18),rgba(245,197,66,.04))}
   .champ .fl{width:34px;height:34px;border-color:var(--gold)}
   .champ .lbl{font-size:10px;letter-spacing:.18em;color:var(--gold);font-weight:800;text-transform:uppercase}
   .champ .nm{font-size:22px;font-weight:900}
-  .cup{font-size:34px;line-height:1}
   .finalists{display:flex;align-items:center;gap:14px}
   .fin{display:flex;flex-direction:column;align-items:center;gap:4px}
   .fin .fl{width:30px;height:30px}
   .fin span{font-size:12px;font-weight:800}
-  .third{margin-top:6px;text-align:center;border:1px dashed var(--border);border-radius:16px;padding:10px 16px}
+  .cup{font-size:34px;line-height:1}
+  .third{margin-top:4px;text-align:center;border:1px dashed var(--border);border-radius:16px;padding:9px 16px}
   .third .lbl{font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:800;text-transform:uppercase}
-  .third .row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px}
-  .third .row .fl{width:22px;height:22px}
+  .third .row{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:5px}
+  .third .row .fl{width:20px;height:20px}
   .third .wn{margin-top:5px;font-size:15px;font-weight:900;color:var(--gold)}
-
   .note{text-align:center;color:var(--muted);font-size:12px;margin:14px 16px 36px;line-height:1.5}
 </style>
 </head>
@@ -70,35 +66,58 @@
   <header>
     <div class="kicker">La Grille</div>
     <h1>MONDIAL 2026</h1>
-    <div class="sub">Tableau de la phase finale — aperçu (résultats fictifs)</div>
+    <div class="sub">Tableau de la phase finale — aperçu (équipes/scores fictifs)</div>
   </header>
 
   <div class="scroller">
     <div class="bracket">
 
-      <!-- ===== CÔTÉ GAUCHE ===== -->
+      <!-- ===== GAUCHE ===== -->
       <div class="side left">
-        <!-- 8es -->
+        <!-- 16es -->
         <div class="col">
+          <div class="rh">16es</div>
           <div class="pair">
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/pl.svg"></span><span class="c">POL</span><span class="s">0</span></div></div>
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/gb-eng.svg"></span><span class="c">ANG</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/sn.svg"></span><span class="c">SEN</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">28/06 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/gh.svg"></span><span class="c">GHA</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">28/06 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/pl.svg"></span><span class="c">POL</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/mx.svg"></span><span class="c">MEX</span><span class="s">1</span></div></div>
           </div>
           <div class="pair">
-            <div class="m"><div class="t l"><span class="fl"><img src="https://flagcdn.com/be.svg"></span><span class="c">BEL</span><span class="s">0</span></div><div class="t w"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">1</span></div></div>
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/pt.svg"></span><span class="c">POR</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ch.svg"></span><span class="c">SUI</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">29/06 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/gb-eng.svg"></span><span class="c">ANG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ec.svg"></span><span class="c">EQU</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">29/06 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/sn.svg"></span><span class="c">SEN</span><span class="s">1</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/qa.svg"></span><span class="c">QAT</span><span class="s">0</span></div></div>
+          </div>
+          <div class="pair">
+            <div class="m"><div class="dt">30/06 · 18:00</div><div class="t l"><span class="fl"><img src="https://flagcdn.com/be.svg"></span><span class="c">BEL</span><span class="s">0</span></div><div class="t w"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">30/06 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/pt.svg"></span><span class="c">POR</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/kr.svg"></span><span class="c">KOR</span><span class="s">1</span></div></div>
+          </div>
+          <div class="pair">
+            <div class="m"><div class="dt">01/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/ch.svg"></span><span class="c">SUI</span><span class="s">1</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/cm.svg"></span><span class="c">CMR</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">01/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/hr.svg"></span><span class="c">CRO</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ma.svg"></span><span class="c">MAR</span><span class="s">1</span></div></div>
+          </div>
+        </div>
+        <!-- 8es -->
+        <div class="col">
+          <div class="rh">8es</div>
+          <div class="pair">
+            <div class="m"><div class="dt">04/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/pl.svg"></span><span class="c">POL</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">04/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/gb-eng.svg"></span><span class="c">ANG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/sn.svg"></span><span class="c">SEN</span><span class="s">1</span></div></div>
+          </div>
+          <div class="pair">
+            <div class="m"><div class="dt">05/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">1</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/pt.svg"></span><span class="c">POR</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">05/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/ch.svg"></span><span class="c">SUI</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/hr.svg"></span><span class="c">CRO</span><span class="s">1</span></div></div>
           </div>
         </div>
         <!-- Quarts -->
         <div class="col">
+          <div class="rh">Quarts</div>
           <div class="pair">
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/gb-eng.svg"></span><span class="c">ANG</span><span class="s">1</span></div></div>
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/pt.svg"></span><span class="c">POR</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">09/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/gb-eng.svg"></span><span class="c">ANG</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">10/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ch.svg"></span><span class="c">SUI</span><span class="s">1</span></div></div>
           </div>
         </div>
         <!-- Demie -->
         <div class="col">
-          <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">0</span></div></div>
+          <div class="rh">Demie</div>
+          <div class="m"><div class="dt">14/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/fr.svg"></span><span class="c">FRA</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span class="c">ESP</span><span class="s">0</span></div></div>
         </div>
       </div>
 
@@ -110,35 +129,59 @@
           <div class="cup">🏆</div>
           <div class="fin"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span>BRE</span></div>
         </div>
+        <div class="dt" style="margin:-4px 0 0">Finale · 19/07 · 21:00</div>
         <div class="third">
-          <div class="lbl">3e place</div>
-          <div class="row"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span style="font-weight:700;font-size:13px">ESP</span><span style="color:var(--muted)">–</span><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span style="font-weight:700;font-size:13px">ARG</span></div>
+          <div class="lbl">3e place · 18/07</div>
+          <div class="row"><span class="fl"><img src="https://flagcdn.com/es.svg"></span><span style="font-weight:700;font-size:12px">ESP</span><span style="color:var(--muted)">–</span><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span style="font-weight:700;font-size:12px">ARG</span></div>
           <div class="wn">Argentine</div>
         </div>
       </div>
 
-      <!-- ===== CÔTÉ DROIT ===== -->
+      <!-- ===== DROITE ===== -->
       <div class="side right">
         <!-- Demie -->
         <div class="col">
-          <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">1</span></div></div>
+          <div class="rh">Demie</div>
+          <div class="m"><div class="dt">15/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">1</span></div></div>
         </div>
         <!-- Quarts -->
         <div class="col">
+          <div class="rh">Quarts</div>
           <div class="pair">
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/nl.svg"></span><span class="c">NLD</span><span class="s">1</span></div></div>
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/de.svg"></span><span class="c">ALL</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">09/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/nl.svg"></span><span class="c">NLD</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">10/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/de.svg"></span><span class="c">ALL</span><span class="s">1</span></div></div>
           </div>
         </div>
         <!-- 8es -->
         <div class="col">
+          <div class="rh">8es</div>
           <div class="pair">
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/nl.svg"></span><span class="c">NLD</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/us.svg"></span><span class="c">USA</span><span class="s">0</span></div></div>
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/dk.svg"></span><span class="c">DAN</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">06/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/nl.svg"></span><span class="c">NLD</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/us.svg"></span><span class="c">USA</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">06/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/dk.svg"></span><span class="c">DAN</span><span class="s">1</span></div></div>
           </div>
           <div class="pair">
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/de.svg"></span><span class="c">ALL</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/hr.svg"></span><span class="c">CRO</span><span class="s">1</span></div></div>
-            <div class="m"><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/uy.svg"></span><span class="c">URU</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">07/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/de.svg"></span><span class="c">ALL</span><span class="s">1</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/cr.svg"></span><span class="c">CRC</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">07/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/uy.svg"></span><span class="c">URU</span><span class="s">0</span></div></div>
+          </div>
+        </div>
+        <!-- 16es -->
+        <div class="col">
+          <div class="rh">16es</div>
+          <div class="pair">
+            <div class="m"><div class="dt">02/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/nl.svg"></span><span class="c">NLD</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/ir.svg"></span><span class="c">IRN</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">02/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/us.svg"></span><span class="c">USA</span><span class="s">1</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/au.svg"></span><span class="c">AUS</span><span class="s">0</span></div></div>
+          </div>
+          <div class="pair">
+            <div class="m"><div class="dt">02/07 · 03:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/sa.svg"></span><span class="c">KSA</span><span class="s">0</span></div></div>
+            <div class="m"><div class="dt">03/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/dk.svg"></span><span class="c">DAN</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/tn.svg"></span><span class="c">TUN</span><span class="s">1</span></div></div>
+          </div>
+          <div class="pair">
+            <div class="m"><div class="dt">03/07 · 21:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/de.svg"></span><span class="c">ALL</span><span class="s">3</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/cr.svg"></span><span class="c">CRC</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">03/07 · 03:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/br.svg"></span><span class="c">BRE</span><span class="s">4</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/rs.svg"></span><span class="c">SRB</span><span class="s">0</span></div></div>
+          </div>
+          <div class="pair">
+            <div class="m"><div class="dt">04/07 · 03:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/uy.svg"></span><span class="c">URU</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/eg.svg"></span><span class="c">EGY</span><span class="s">1</span></div></div>
+            <div class="m"><div class="dt">04/07 · 18:00</div><div class="t w"><span class="fl"><img src="https://flagcdn.com/ar.svg"></span><span class="c">ARG</span><span class="s">2</span></div><div class="t l"><span class="fl"><img src="https://flagcdn.com/cl.svg"></span><span class="c">CHI</span><span class="s">1</span></div></div>
           </div>
         </div>
       </div>
@@ -147,8 +190,9 @@
   </div>
 
   <p class="note">
-    Aperçu du style. Dans l'app, le tableau se remplira <b>tout seul</b> avec les vraies équipes et
-    scores au fil de la phase finale (8es → finale), drapeaux ronds, couleurs du thème.
+    Aperçu du style. Dans l'app, le tableau démarre aux <b>16es de finale</b> et se remplit
+    <b>tout seul</b> via l'API : vraies équipes, vrais <b>scores</b>, et le <b>jour + l'heure</b>
+    (heure de Paris) de chaque match dès que le calendrier de la phase finale est connu.
   </p>
 </body>
 </html>
