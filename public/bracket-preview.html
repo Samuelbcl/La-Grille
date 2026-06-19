@@ -6,50 +6,54 @@
 <title>La Grille — Tableau (aperçu mobile)</title>
 <style>
   :root{
-    --bg:#07210f; --accent:#2ecf73; --accent-fg:#04140a; --gold:#ffc24b;
-    --surface:rgba(20,40,28,.55); --surface2:rgba(255,255,255,.10); --border:rgba(255,255,255,.13);
+    --bg:#07210f; --accent:#2ecf73; --accent-fg:#04140a; --gold:#ffc24b; --line:rgba(255,255,255,.28);
+    --surface:rgba(20,40,28,.55); --surface2:rgba(255,255,255,.12); --border:rgba(255,255,255,.13);
     --text:#f6f7f9; --muted:rgba(230,240,233,.6);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  body{margin:0;font-family:-apple-system,"SF Pro Text","Segoe UI",sans-serif;
-    background:#05130a;min-height:100vh;display:flex;justify-content:center;padding:18px 0}
-  /* cadre téléphone */
-  .phone{width:390px;max-width:100vw;min-height:780px;border-radius:34px;overflow:hidden;position:relative;
+  body{margin:0;font-family:-apple-system,"SF Pro Text","Segoe UI",sans-serif;background:#05130a;
+    min-height:100vh;display:flex;justify-content:center;padding:18px 0}
+  .phone{width:390px;max-width:100vw;min-height:800px;border-radius:34px;overflow:hidden;position:relative;color:var(--text);
     background:radial-gradient(120% 70% at 50% 0%,#0c3a1f 0%,var(--bg) 60%,#03100a 100%);
-    color:var(--text);box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
-  .hd{padding:46px 18px 10px;text-align:center}
+    box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08)}
+  .hd{padding:46px 18px 8px;text-align:center}
   .hd .t{font-size:22px;font-weight:800}
   .hd .s{font-size:13px;color:var(--muted)}
   .seg{display:flex;gap:6px;margin:10px 16px 0;background:var(--surface2);border-radius:16px;padding:5px}
   .seg button{flex:1;border:0;background:transparent;color:var(--muted);font-weight:700;font-size:13px;padding:8px;border-radius:11px}
   .seg button.on{background:var(--accent);color:var(--accent-fg)}
-  .body{padding:14px 16px 28px}
+  .body{padding:14px 14px 28px}
 
   .champ{display:flex;align-items:center;justify-content:center;gap:10px;border:1.5px solid var(--gold);
-    border-radius:18px;padding:12px;margin-bottom:14px;background:linear-gradient(135deg,rgba(255,194,75,.16),rgba(255,194,75,.03))}
+    border-radius:18px;padding:11px;margin-bottom:14px;background:linear-gradient(135deg,rgba(255,194,75,.16),rgba(255,194,75,.03))}
   .champ b{font-size:15px;font-weight:900}
-  .cup{font-size:24px}
 
-  .tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
+  .tabs{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
   .tabs button{flex:none;border:1px solid var(--border);background:var(--surface);color:var(--muted);
-    font-weight:700;font-size:13px;padding:7px 14px;border-radius:12px}
+    font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:7px 13px;border-radius:12px;white-space:nowrap}
   .tabs button.on{border-color:var(--accent);background:var(--accent);color:var(--accent-fg)}
 
-  .cards{display:flex;flex-direction:column;gap:10px}
-  .m{border:1px solid var(--border);background:var(--surface);border-radius:16px;padding:11px;backdrop-filter:blur(10px)}
-  .m.final{border-color:var(--gold)}
-  .dt{text-align:center;font-size:11px;color:var(--muted);margin-bottom:7px;font-variant-numeric:tabular-nums}
-  .t{display:flex;align-items:center;gap:10px;padding:3px 0}
-  .fl{width:26px;height:26px;border-radius:50%;overflow:hidden;flex:none;border:2px solid rgba(255,255,255,.25)}
+  .pair{position:relative;padding-right:46px;margin-bottom:18px}
+  .pair .conn{position:absolute;right:30px;top:25%;bottom:25%;width:12px;border:2px solid var(--line);border-left:0;border-radius:0 9px 9px 0}
+  .pair .nxt{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+  .row{display:flex;align-items:center;gap:8px;margin:7px 0}
+  .chev{width:34px;height:34px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;color:var(--muted);flex:none;font-size:18px;border:0}
+  .card{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface);border-radius:13px;padding:8px 11px;backdrop-filter:blur(8px)}
+  .card.final{border-color:var(--gold)}
+  .teams{flex:1;min-width:0}
+  .t{display:flex;align-items:center;gap:8px;padding:2px 0}
+  .fl{width:22px;height:22px;border-radius:50%;overflow:hidden;flex:none;border:2px solid rgba(255,255,255,.25)}
   .t.w .fl{border-color:var(--gold)}
   .fl img{width:100%;height:100%;object-fit:cover;display:block}
-  .t .n{flex:1;font-size:15px;font-weight:600}
-  .t .sc{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted);width:18px;text-align:right}
+  .t .n{flex:1;min-width:0;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .t .sc{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--muted);width:16px;text-align:right}
   .t.w .n,.t.w .sc{color:var(--gold);font-weight:800}
   .t.l{opacity:.45}
-  .sep{height:1px;background:var(--border);margin:4px 0}
-  .note{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;line-height:1.5}
+  .meta{flex:none;text-align:right;font-size:11px;color:var(--muted);line-height:1.35}
+  .meta .d{font-variant-numeric:tabular-nums;color:#cdd6d0;font-weight:600}
+  .third .lbl{font-size:11px;font-weight:800;color:var(--muted);margin:0 0 6px 2px}
+  .note{font-size:11px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -57,67 +61,66 @@
     <div class="hd"><div class="t">Classement</div><div class="s">Onglet « Tableau » — phase finale</div></div>
     <div class="seg"><button>Joueurs</button><button class="on">Tableau</button></div>
     <div class="body">
-      <div class="champ"><span class="cup">🏆</span><span class="fl"><img src="https://flagcdn.com/br.svg"></span><b>Champion · Brésil</b></div>
+      <div class="champ">🏆 <span class="fl" style="border-color:var(--gold)"><img src="https://flagcdn.com/br.svg"></span><b>Champion · Brésil</b></div>
       <div class="tabs" id="tabs"></div>
-      <div class="cards" id="cards"></div>
-      <div class="note">Aperçu mobile (fictif). Dans l'app : se remplit tout seul via l'API — vraies équipes,
-      scores, jour + heure (Paris). Tape un tour pour naviguer.</div>
+      <div id="cards"></div>
+      <div class="note">Aperçu mobile. Dans l'app : vraies équipes, scores, <b>date + stade</b> via l'API.
+      ‹ et › relient les tours.</div>
     </div>
   </div>
 
 <script>
 const F=(c,n,s)=>({c,n,s});
+const M=(dt,vn,a,b,w)=>({dt,vn,a,b,w});
 const R=[
- {k:"r32",l:"16es",m:[
-  {dt:"28/06 · 18:00",a:F("fr","France",3),b:F("gh","Ghana",0),w:"a"},
-  {dt:"28/06 · 21:00",a:F("ar","Argentine",2),b:F("au","Australie",0),w:"a"},
-  {dt:"29/06 · 18:00",a:F("es","Espagne",1),b:F("ma","Maroc",0),w:"a"},
-  {dt:"29/06 · 21:00",a:F("gb-eng","Angleterre",2),b:F("sn","Sénégal",1),w:"a"},
-  {dt:"30/06 · 18:00",a:F("br","Brésil",3),b:F("kr","Corée Sud",1),w:"a"},
-  {dt:"30/06 · 21:00",a:F("pt","Portugal",2),b:F("ch","Suisse",1),w:"a"},
-  {dt:"01/07 · 18:00",a:F("nl","Pays-Bas",2),b:F("us","États-Unis",0),w:"a"},
-  {dt:"01/07 · 21:00",a:F("hr","Croatie",1),b:F("jp","Japon",0),w:"a"},
-  {dt:"02/07 · 18:00",a:F("de","Allemagne",2),b:F("ca","Canada",0),w:"a"},
-  {dt:"02/07 · 21:00",a:F("be","Belgique",2),b:F("eg","Égypte",1),w:"a"},
-  {dt:"03/07 · 18:00",a:F("uy","Uruguay",2),b:F("qa","Qatar",0),w:"a"},
-  {dt:"03/07 · 21:00",a:F("mx","Mexique",1),b:F("ir","Iran",0),w:"a"},
-  {dt:"04/07 · 18:00",a:F("co","Colombie",2),b:F("sa","Arabie S.",1),w:"a"},
-  {dt:"04/07 · 21:00",a:F("ec","Équateur",1),b:F("tn","Tunisie",0),w:"a"},
-  {dt:"05/07 · 18:00",a:F("pl","Pologne",2),b:F("cr","Costa Rica",1),w:"a"},
-  {dt:"05/07 · 21:00",a:F("dk","Danemark",1),b:F("rs","Serbie",0),w:"a"},
+ {k:"r32",l:"1/16 de finale",m:[
+  M("28.06","Philadelphie",F("fr","France",3),F("gh","Ghana",0),"a"),
+  M("28.06","Houston",F("pl","Pologne",2),F("mx","Mexique",1),"a"),
+  M("29.06","Arlington",F("gb-eng","Angleterre",2),F("sn","Sénégal",1),"a"),
+  M("29.06","Seattle",F("es","Espagne",1),F("ma","Maroc",0),"a"),
+  M("30.06","Atlanta",F("br","Brésil",3),F("kr","Corée Sud",1),"a"),
+  M("30.06","Miami",F("pt","Portugal",2),F("ch","Suisse",1),"a"),
+  M("01.07","Dallas",F("nl","Pays-Bas",2),F("us","États-Unis",0),"a"),
+  M("01.07","Toronto",F("hr","Croatie",1),F("jp","Japon",0),"a"),
  ]},
- {k:"r16",l:"8es",m:[
-  {dt:"08/07 · 18:00",a:F("fr","France",2),b:F("ar","Argentine",1),w:"a"},
-  {dt:"08/07 · 21:00",a:F("es","Espagne",2),b:F("gb-eng","Angleterre",1),w:"a"},
-  {dt:"09/07 · 18:00",a:F("br","Brésil",3),b:F("pt","Portugal",1),w:"a"},
-  {dt:"09/07 · 21:00",a:F("nl","Pays-Bas",2),b:F("hr","Croatie",0),w:"a"},
-  {dt:"10/07 · 18:00",a:F("de","Allemagne",1),b:F("be","Belgique",0),w:"a"},
-  {dt:"10/07 · 21:00",a:F("uy","Uruguay",2),b:F("mx","Mexique",1),w:"a"},
-  {dt:"11/07 · 18:00",a:F("co","Colombie",1),b:F("ec","Équateur",0),w:"a"},
-  {dt:"11/07 · 21:00",a:F("dk","Danemark",2),b:F("pl","Pologne",1),w:"a"},
+ {k:"r16",l:"1/8 de finale",m:[
+  M("04.07","Philadelphie",F("fr","France",2),F("pl","Pologne",0),"a"),
+  M("04.07","Houston",F("gb-eng","Angleterre",2),F("sn","Sénégal",1),"a"),
+  M("06.07","Arlington",F("es","Espagne",1),F("pt","Portugal",0),"a"),
+  M("07.07","Seattle",F("br","Brésil",2),F("nl","Pays-Bas",1),"a"),
  ]},
- {k:"qf",l:"Quarts",m:[
-  {dt:"14/07 · 21:00",a:F("fr","France",2),b:F("es","Espagne",0),w:"a"},
-  {dt:"15/07 · 21:00",a:F("br","Brésil",2),b:F("nl","Pays-Bas",1),w:"a"},
-  {dt:"16/07 · 21:00",a:F("de","Allemagne",1),b:F("uy","Uruguay",0),w:"a"},
-  {dt:"17/07 · 21:00",a:F("co","Colombie",2),b:F("dk","Danemark",1),w:"a"},
+ {k:"qf",l:"Quarts de finale",m:[
+  M("09.07","Foxborough",F("fr","France",2),F("gb-eng","Angleterre",1),"a"),
+  M("10.07","Inglewood",F("es","Espagne",2),F("hr","Croatie",1),"a"),
+  M("11.07","Miami",F("br","Brésil",3),F("de","Allemagne",1),"a"),
+  M("12.07","Kansas City",F("ar","Argentine",2),F("uy","Uruguay",1),"a"),
  ]},
- {k:"sf",l:"Demies",m:[
-  {dt:"21/07 · 21:00",a:F("br","Brésil",2),b:F("fr","France",1),w:"a"},
-  {dt:"22/07 · 21:00",a:F("de","Allemagne",2),b:F("co","Colombie",1),w:"a"},
+ {k:"sf",l:"Demi-finales",m:[
+  M("14.07","Arlington",F("fr","France",1),F("es","Espagne",0),"a"),
+  M("15.07","Atlanta",F("br","Brésil",2),F("ar","Argentine",1),"a"),
  ]},
  {k:"final",l:"Finale",fin:1,m:[
-  {dt:"26/07 · 21:00",a:F("br","Brésil",2),b:F("de","Allemagne",1),w:"a"},
- ]},
+  M("19.07","East Rutherford",F("br","Brésil",2),F("fr","France",1),"a"),
+ ],third:M("18.07","Miami",F("es","Espagne",1),F("ar","Argentine",3),"b")},
 ];
 let cur="qf";
-const tabs=document.getElementById("tabs"),cards=document.getElementById("cards");
-function team(t,win){return `<div class="t ${win?'w':'l'}"><span class="fl"><img src="https://flagcdn.com/${t.c}.svg"></span><span class="n">${t.n}</span><span class="sc">${t.s}</span></div>`}
+const tabsEl=document.getElementById("tabs"),cardsEl=document.getElementById("cards");
+const team=(t,win)=>`<div class="t ${win?'w':'l'}"><span class="fl"><img src="https://flagcdn.com/${t.c}.svg"></span><span class="n">${t.n}</span><span class="sc">${t.s}</span></div>`;
+const card=(m,fin)=>`<div class="card ${fin?'final':''}"><div class="teams">${team(m.a,m.w==='a')}${team(m.b,m.w==='b')}</div><div class="meta"><div class="d">${m.dt}.2026</div><div>${m.vn}</div></div></div>`;
 function render(){
-  tabs.innerHTML=R.map(r=>`<button class="${r.k===cur?'on':''}" data-k="${r.k}">${r.l}</button>`).join("");
-  const rd=R.find(r=>r.k===cur);
-  cards.innerHTML=rd.m.map(m=>`<div class="m ${rd.fin?'final':''}"><div class="dt">${m.dt}</div>${team(m.a,m.w==='a')}<div class="sep"></div>${team(m.b,m.w==='b')}</div>`).join("");
-  tabs.querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;render();});
+  tabsEl.innerHTML=R.map(r=>`<button class="${r.k===cur?'on':''}" data-k="${r.k}">${r.l}</button>`).join("");
+  const rd=R.find(r=>r.k===cur), hasNext=R.findIndex(r=>r.k===cur)<R.length-1, hasPrev=R.findIndex(r=>r.k===cur)>0;
+  let html="";
+  for(let i=0;i<rd.m.length;i+=2){
+    const pair=rd.m.slice(i,i+2);
+    html+=`<div class="pair">`+pair.map(m=>`<div class="row"><button class="chev" data-go="prev" ${hasPrev?'':'style="visibility:hidden"'}>‹</button>${card(m,rd.fin)}</div>`).join("");
+    if(hasNext && pair.length===2) html+=`<div class="conn"></div><button class="chev nxt" data-go="next">›</button>`;
+    html+=`</div>`;
+  }
+  if(rd.third){ html+=`<div class="third"><div class="lbl">3E PLACE</div><div class="row"><button class="chev" style="visibility:hidden">‹</button>${card(rd.third)}</div></div>`; }
+  cardsEl.innerHTML=html;
+  tabsEl.querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=b.dataset.k;render();});
+  cardsEl.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const i=R.findIndex(r=>r.k===cur);const j=b.dataset.go==="next"?i+1:i-1;if(R[j]){cur=R[j].k;render();}});
 }
 render();
 </script>
