@@ -77,6 +77,7 @@ export async function GET(request: Request) {
     LAST_16: "r16",
     QUARTER_FINALS: "qf",
     SEMI_FINALS: "sf",
+    THIRD_PLACE: "third",
     FINAL: "final",
   };
 
