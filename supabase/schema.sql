@@ -62,9 +62,12 @@ create table if not exists public.matches (
   score_a     integer,                                   -- résultat réel (null tant que pas joué)
   score_b     integer,
   status      text not null default 'scheduled',         -- scheduled | live | finished
+  manual      boolean not null default false,            -- score forcé par l'orga → la synchro n'y touche plus
   created_at  timestamptz not null default now(),
   unique (pool_id, match_no)
 );
+-- Ajout idempotent (bases déjà créées).
+alter table public.matches add column if not exists manual boolean not null default false;
 
 -- ---------------------------------------------------------------------
 -- 5. PRONOSTICS

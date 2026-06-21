@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar } from "@/components/Avatar";
 import { SEED_MATCHES } from "@/data/matches";
 import { BonusAdmin } from "@/components/BonusAdmin";
+import { ScoreOverride } from "@/components/ScoreOverride";
 import { Copy, Check } from "lucide-react";
 
 type Pool = {
@@ -259,6 +260,9 @@ export default function AdminPage() {
               </p>
             </Card>
           )}
+
+          {/* Correction manuelle d'un score (si l'API se trompe) */}
+          <ScoreOverride poolId={pool.id} />
 
           {/* Réponses des pronos bonus */}
           <BonusAdmin poolId={pool.id} />

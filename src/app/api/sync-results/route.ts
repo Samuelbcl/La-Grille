@@ -104,7 +104,7 @@ export async function GET(request: Request) {
   const admin = createClient(supaUrl, serviceKey, { auth: { persistSession: false } });
   const { data: rows, error } = await admin
     .from("matches")
-    .select("id, pool_id, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status")
+    .select("id, pool_id, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, manual")
     .eq("stage", "group");
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -129,6 +129,7 @@ export async function GET(request: Request) {
   const RANK: Record<string, number> = { scheduled: 0, live: 1, finished: 2 };
   let updated = 0;
   for (const r of rows ?? []) {
+    if (r.manual) continue; // score forcé par l'orga : on n'y touche pas
     const result = apiByPair.get(pairKey(r.team_a, r.team_b));
     if (!result) continue;
     const { hs, as, apiStatus } = result;
@@ -157,10 +158,19 @@ export async function GET(request: Request) {
   }
 
   // --- 5) Import auto de la phase finale (dès que les équipes sont connues) ---
+  // Matchs de phase finale corrigés à la main → on ne les écrase pas.
+  const { data: manualKo } = await admin
+    .from("matches")
+    .select("pool_id, match_no")
+    .eq("manual", true)
+    .neq("stage", "group");
+  const manualSet = new Set((manualKo ?? []).map((x) => `${x.pool_id}|${x.match_no}`));
+
   let koWritten = 0;
   for (const ko of knockout) {
     const finishedOrLive = ko.st === "finished" || ko.st === "live";
     for (const poolId of poolIds) {
+      if (manualSet.has(`${poolId}|${ko.matchNo}`)) continue; // corrigé manuellement
       const { error: koErr } = await admin.from("matches").upsert(
         {
           pool_id: poolId,

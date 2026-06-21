@@ -90,6 +90,7 @@ export interface Database {
           score_a: number | null;
           score_b: number | null;
           status: string;
+          manual: boolean;
           created_at: string;
         };
         Insert: {
@@ -103,12 +104,14 @@ export interface Database {
           venue?: string | null;
           team_a_code?: string | null;
           team_b_code?: string | null;
+          manual?: boolean;
         };
         Update: {
           score_a?: number | null;
           score_b?: number | null;
           status?: string;
           kickoff?: string;
+          manual?: boolean;
         };
         Relationships: [
           {
