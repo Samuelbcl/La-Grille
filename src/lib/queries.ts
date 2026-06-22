@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { BONUS, normalizeAns, looseMatch } from "@/lib/bonus";
+import { computePoints } from "@/lib/scoring";
+import { dayId, todayId } from "@/lib/utils";
 
 /** Récupère le 1er pool dont l'utilisateur est membre (MVP = un seul pool). */
 export async function getCurrentPool() {
@@ -125,6 +127,36 @@ async function getBonusPointsByUser(poolId: string): Promise<Record<string, numb
     if (ok) pts[a.user_id] = (pts[a.user_id] ?? 0) + q.points;
   }
   return pts;
+}
+
+/** Récap du jour : matchs du pool terminés AUJOURD'HUI + points gagnés par joueur. */
+export async function getTodayRecap(poolId: string) {
+  const supabase = await createClient();
+  const today = todayId();
+  const { data: matchRows } = await supabase
+    .from("matches")
+    .select("id, score_a, score_b, kickoff")
+    .eq("pool_id", poolId)
+    .eq("status", "finished");
+  const todayMatches = (matchRows ?? []).filter((m) => dayId(m.kickoff) === today);
+  const pointsToday: Record<string, { pts: number; exact: number }> = {};
+  if (todayMatches.length === 0) return { count: 0, pointsToday };
+
+  const ids = todayMatches.map((m) => m.id);
+  const byMatch = new Map(todayMatches.map((m) => [m.id, m]));
+  const { data: preds } = await supabase
+    .from("predictions")
+    .select("user_id, match_id, pred_a, pred_b, joker")
+    .in("match_id", ids);
+  for (const p of preds ?? []) {
+    const m = byMatch.get(p.match_id);
+    if (!m) continue;
+    const pts = computePoints(p.pred_a, p.pred_b, m.score_a, m.score_b) * (p.joker ? 2 : 1);
+    const e = (pointsToday[p.user_id] ??= { pts: 0, exact: 0 });
+    e.pts += pts;
+    if (m.score_a != null && p.pred_a === m.score_a && p.pred_b === m.score_b) e.exact++;
+  }
+  return { count: todayMatches.length, pointsToday };
 }
 
 /** Classement = points de matchs + points bonus, retrié. */
