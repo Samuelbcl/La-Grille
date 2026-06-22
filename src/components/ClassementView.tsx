@@ -31,17 +31,34 @@ const BADGE_META: Record<string, { Icon: LucideIcon; cls: string; label: string 
   last: { Icon: Snowflake, cls: "text-muted", label: "Lanterne rouge" },
 };
 
-function Badges({ keys }: { keys?: string[] }) {
-  if (!keys?.length) return null;
+function BadgesCard({ badges, players }: { badges: Record<string, string[]>; players: LbRow[] }) {
+  const order = ["leader", "exact", "day", "last"];
+  const rows = order
+    .map((key) => {
+      const holderId = Object.keys(badges).find((uid) => badges[uid]?.includes(key));
+      const holder = players.find((p) => p.user_id === holderId);
+      return holder ? { key, ...BADGE_META[key], holder } : null;
+    })
+    .filter((x): x is { key: string; Icon: LucideIcon; cls: string; label: string; holder: LbRow } => x != null);
+  if (!rows.length) return null;
   return (
-    <span className="inline-flex items-center gap-1 align-middle">
-      {keys.map((k) => {
-        const b = BADGE_META[k];
-        if (!b) return null;
-        const Icon = b.Icon;
-        return <Icon key={k} size={14} className={b.cls} aria-label={b.label} />;
-      })}
-    </span>
+    <div className="mb-4 rounded-2xl border border-border bg-surface p-4 shadow-card">
+      <p className="mb-2.5 text-[12px] font-bold uppercase tracking-wide text-muted">Badges du moment</p>
+      <div className="space-y-2.5">
+        {rows.map(({ key, Icon, cls, label, holder }) => (
+          <div key={key} className="flex items-center gap-2.5 text-[13px]">
+            <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface-2 ${cls}`}>
+              <Icon size={15} />
+            </span>
+            <span className="min-w-0 flex-1 font-semibold">{label}</span>
+            <span className="flex items-center gap-1.5">
+              <Avatar url={holder.avatar_url} name={holder.display_name} size={20} />
+              <span className="max-w-[120px] truncate font-medium">{holder.display_name}</span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -57,9 +74,9 @@ function Movement({ d }: { d: number }) {
   );
 }
 
-type RowExtras = { delta: number; badges?: string[] };
+type RowExtras = { delta: number };
 
-function PodiumSpot({ row, place, me, onOpen, delta, badges }: { row: LbRow; place: 1 | 2 | 3; me: boolean; onOpen: () => void } & RowExtras) {
+function PodiumSpot({ row, place, me, onOpen, delta }: { row: LbRow; place: 1 | 2 | 3; me: boolean; onOpen: () => void } & RowExtras) {
   const ped = place === 1 ? "h-20" : place === 2 ? "h-14" : "h-10";
   return (
     <div className="flex w-1/3 flex-col items-center">
@@ -71,10 +88,7 @@ function PodiumSpot({ row, place, me, onOpen, delta, badges }: { row: LbRow; pla
           size={place === 1 ? 64 : 56}
           className={`mt-1 ${me ? "ring-2 ring-accent" : ""}`}
         />
-        <p className="mt-1.5 flex max-w-full items-center gap-1 truncate px-1 text-[13px] font-semibold">
-          <span className="truncate">{row.display_name}</span>
-          <Badges keys={badges} />
-        </p>
+        <p className="mt-1.5 max-w-full truncate px-1 text-[13px] font-semibold">{row.display_name}</p>
         <p className="flex items-center gap-1 text-[12px] font-bold tabular-nums text-accent">
           {row.total_points} pts <Movement d={delta} />
         </p>
@@ -91,7 +105,7 @@ function PodiumSpot({ row, place, me, onOpen, delta, badges }: { row: LbRow; pla
   );
 }
 
-function RankRow({ row, rank, me, onOpen, delta, badges }: { row: LbRow; rank: number; me: boolean; onOpen: () => void } & RowExtras) {
+function RankRow({ row, rank, me, onOpen, delta }: { row: LbRow; rank: number; me: boolean; onOpen: () => void } & RowExtras) {
   return (
     <button
       onClick={onOpen}
@@ -100,12 +114,9 @@ function RankRow({ row, rank, me, onOpen, delta, badges }: { row: LbRow; rank: n
       <span className="w-5 text-center text-sm font-bold tabular-nums text-muted">{rank}</span>
       <Avatar url={row.avatar_url} name={row.display_name} size={36} />
       <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 font-semibold">
-          <span className="min-w-0 truncate">
-            {row.display_name}
-            {me && <span className="text-accent"> · toi</span>}
-          </span>
-          <Badges keys={badges} />
+        <p className="truncate font-semibold">
+          {row.display_name}
+          {me && <span className="text-accent"> · toi</span>}
         </p>
         <p className="text-[12px] text-muted">
           {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
@@ -129,13 +140,11 @@ function Players({
   me,
   onOpen,
   deltas,
-  badges,
 }: {
   rows: LbRow[];
   me: string;
   onOpen: (r: LbRow) => void;
   deltas: Record<string, number>;
-  badges: Record<string, string[]>;
 }) {
   if (rows.length === 0) {
     return (
@@ -150,9 +159,9 @@ function Players({
   return (
     <>
       <div className="mb-5 flex items-end justify-center gap-2 pt-1">
-        {top[1] && <PodiumSpot row={top[1]} place={2} me={top[1].user_id === me} onOpen={() => onOpen(top[1])} delta={deltas[top[1].user_id] ?? 0} badges={badges[top[1].user_id]} />}
-        {top[0] && <PodiumSpot row={top[0]} place={1} me={top[0].user_id === me} onOpen={() => onOpen(top[0])} delta={deltas[top[0].user_id] ?? 0} badges={badges[top[0].user_id]} />}
-        {top[2] && <PodiumSpot row={top[2]} place={3} me={top[2].user_id === me} onOpen={() => onOpen(top[2])} delta={deltas[top[2].user_id] ?? 0} badges={badges[top[2].user_id]} />}
+        {top[1] && <PodiumSpot row={top[1]} place={2} me={top[1].user_id === me} onOpen={() => onOpen(top[1])} delta={deltas[top[1].user_id] ?? 0} />}
+        {top[0] && <PodiumSpot row={top[0]} place={1} me={top[0].user_id === me} onOpen={() => onOpen(top[0])} delta={deltas[top[0].user_id] ?? 0} />}
+        {top[2] && <PodiumSpot row={top[2]} place={3} me={top[2].user_id === me} onOpen={() => onOpen(top[2])} delta={deltas[top[2].user_id] ?? 0} />}
       </div>
       {rest.length > 0 && (
         <div className="space-y-2">
@@ -164,7 +173,6 @@ function Players({
               me={r.user_id === me}
               onOpen={() => onOpen(r)}
               delta={deltas[r.user_id] ?? 0}
-              badges={badges[r.user_id]}
             />
           ))}
         </div>
@@ -236,6 +244,7 @@ export function ClassementView({
   const koExists = bracket.length > 0;
   const [tab, setTab] = useState<"players" | "groups">("players");
   const [detail, setDetail] = useState<LbRow | null>(null);
+  const [recapAll, setRecapAll] = useState(false);
   const groupLabels = Object.keys(standings).sort();
 
   // Temps réel : rafraîchit le classement dès qu'un score de match change.
@@ -290,7 +299,7 @@ export function ClassementView({
                 <Flame size={14} /> Récap du jour · {recap.count} match{recap.count > 1 ? "s" : ""}
               </div>
               <div className="space-y-1.5">
-                {recap.top.map((t, i) => (
+                {(recapAll ? recap.top : recap.top.slice(0, 3)).map((t, i) => (
                   <div key={t.user_id} className="flex items-center gap-2 text-[13px]">
                     <span className="w-4 text-center text-muted">{i + 1}</span>
                     <Avatar url={t.avatar_url} name={t.display_name} size={22} />
@@ -299,9 +308,18 @@ export function ClassementView({
                   </div>
                 ))}
               </div>
+              {recap.top.length > 3 && (
+                <button
+                  onClick={() => setRecapAll((v) => !v)}
+                  className="mt-2 w-full text-center text-[12px] font-medium text-accent"
+                >
+                  {recapAll ? "Voir moins" : `Voir tout (${recap.top.length})`}
+                </button>
+              )}
             </div>
           )}
-          <Players rows={players} me={me} onOpen={setDetail} deltas={deltas} badges={badges} />
+          <BadgesCard badges={badges} players={players} />
+          <Players rows={players} me={me} onOpen={setDetail} deltas={deltas} />
         </>
       ) : koExists ? (
         <BracketView matches={bracket} />

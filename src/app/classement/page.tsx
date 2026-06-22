@@ -63,8 +63,7 @@ export default async function ClassementPage() {
       return p ? { user_id: id, display_name: p.display_name, avatar_url: p.avatar_url, pts: v.pts } : null;
     })
     .filter((x): x is { user_id: string; display_name: string; avatar_url: string | null; pts: number } => !!x && x.pts > 0)
-    .sort((a, b) => b.pts - a.pts)
-    .slice(0, 3);
+    .sort((a, b) => b.pts - a.pts || a.display_name.localeCompare(b.display_name));
 
   const shareText =
     `🏆 ${pool.name} — La Grille\n` +
