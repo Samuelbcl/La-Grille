@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 
-type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; isMine: boolean };
+type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; joker: boolean; isMine: boolean };
 
 export interface MatchCardData {
   id: string;
@@ -86,21 +86,24 @@ export function MatchCard({
     const supabase = createClient();
     const { data } = await supabase
       .from("predictions")
-      .select("user_id, pred_a, pred_b, profiles(display_name, avatar_url)")
+      .select("user_id, pred_a, pred_b, joker, profiles(display_name, avatar_url)")
       .eq("match_id", m.id);
     const list: PeerPred[] = (data ?? []).map((p) => {
       const row = p as unknown as {
         user_id: string;
         pred_a: number;
         pred_b: number;
+        joker: boolean;
         profiles: { display_name: string; avatar_url: string | null } | null;
       };
+      const base = finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b) : 0;
       return {
         name: row.profiles?.display_name ?? "Joueur",
         avatarUrl: row.profiles?.avatar_url ?? null,
         a: row.pred_a,
         b: row.pred_b,
-        pts: finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b) : 0,
+        pts: base * (row.joker ? 2 : 1),
+        joker: row.joker,
         isMine: row.user_id === userId,
       };
     });
@@ -278,6 +281,7 @@ export function MatchCard({
                           </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-2">
+                          {p.joker && <span title="Joker ×2" className="text-warning">🃏</span>}
                           <span className="tabular-nums font-semibold">
                             {p.a}–{p.b}
                           </span>

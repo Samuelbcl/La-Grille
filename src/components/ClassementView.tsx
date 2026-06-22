@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 import { BracketView, type BracketMatch } from "@/components/BracketView";
+import { PlayerDetail } from "@/components/PlayerDetail";
 import type { TeamStanding } from "@/lib/standings";
 
 export type LbRow = {
@@ -23,24 +24,26 @@ export type LbRow = {
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
-function PodiumSpot({ row, place, me }: { row: LbRow; place: 1 | 2 | 3; me: boolean }) {
+function PodiumSpot({ row, place, me, onOpen }: { row: LbRow; place: 1 | 2 | 3; me: boolean; onOpen: () => void }) {
   const ped = place === 1 ? "h-20" : place === 2 ? "h-14" : "h-10";
   return (
     <div className="flex w-1/3 flex-col items-center">
-      <div className="text-2xl">{MEDALS[place - 1]}</div>
-      <Avatar
-        url={row.avatar_url}
-        name={row.display_name}
-        size={place === 1 ? 64 : 56}
-        className={`mt-1 ${me ? "ring-2 ring-accent" : ""}`}
-      />
-      <p className="mt-1.5 max-w-full truncate px-1 text-[13px] font-semibold">{row.display_name}</p>
-      <p className="text-[12px] font-bold tabular-nums text-accent">{row.total_points} pts</p>
-      <p className="mt-0.5 text-center text-[10px] leading-tight text-muted tabular-nums">
-        {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
-        {row.correct_count > 1 ? "s" : ""}
-        {row.bonus_points ? <span className="text-warning"> · 🎯+{row.bonus_points}</span> : null}
-      </p>
+      <button onClick={onOpen} className="flex w-full flex-col items-center active:scale-95 transition">
+        <div className="text-2xl">{MEDALS[place - 1]}</div>
+        <Avatar
+          url={row.avatar_url}
+          name={row.display_name}
+          size={place === 1 ? 64 : 56}
+          className={`mt-1 ${me ? "ring-2 ring-accent" : ""}`}
+        />
+        <p className="mt-1.5 max-w-full truncate px-1 text-[13px] font-semibold">{row.display_name}</p>
+        <p className="text-[12px] font-bold tabular-nums text-accent">{row.total_points} pts</p>
+        <p className="mt-0.5 text-center text-[10px] leading-tight text-muted tabular-nums">
+          {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
+          {row.correct_count > 1 ? "s" : ""}
+          {row.bonus_points ? <span className="text-warning"> · 🎯+{row.bonus_points}</span> : null}
+        </p>
+      </button>
       <div className={`mt-2 grid w-full ${ped} place-items-end justify-center rounded-t-xl border border-b-0 border-border bg-surface-2`}>
         <span className="pb-1 text-lg font-bold text-muted">{place}</span>
       </div>
@@ -48,9 +51,12 @@ function PodiumSpot({ row, place, me }: { row: LbRow; place: 1 | 2 | 3; me: bool
   );
 }
 
-function RankRow({ row, rank, me }: { row: LbRow; rank: number; me: boolean }) {
+function RankRow({ row, rank, me, onOpen }: { row: LbRow; rank: number; me: boolean; onOpen: () => void }) {
   return (
-    <div className={`flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-card ${me ? "border-accent" : "border-border bg-surface"}`}>
+    <button
+      onClick={onOpen}
+      className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left shadow-card transition active:scale-[0.99] ${me ? "border-accent" : "border-border bg-surface"}`}
+    >
       <span className="w-5 text-center text-sm font-bold tabular-nums text-muted">{rank}</span>
       <Avatar url={row.avatar_url} name={row.display_name} size={36} />
       <div className="min-w-0 flex-1">
@@ -66,11 +72,11 @@ function RankRow({ row, rank, me }: { row: LbRow; rank: number; me: boolean }) {
       </div>
       <span className="text-lg font-bold tabular-nums">{row.total_points}</span>
       <span className="-ml-1 text-[11px] text-muted">pts</span>
-    </div>
+    </button>
   );
 }
 
-function Players({ rows, me }: { rows: LbRow[]; me: string }) {
+function Players({ rows, me, onOpen }: { rows: LbRow[]; me: string; onOpen: (r: LbRow) => void }) {
   if (rows.length === 0) {
     return (
       <div className="pt-12 text-center text-muted">
@@ -84,14 +90,14 @@ function Players({ rows, me }: { rows: LbRow[]; me: string }) {
   return (
     <>
       <div className="mb-5 flex items-end justify-center gap-2 pt-1">
-        {top[1] && <PodiumSpot row={top[1]} place={2} me={top[1].user_id === me} />}
-        {top[0] && <PodiumSpot row={top[0]} place={1} me={top[0].user_id === me} />}
-        {top[2] && <PodiumSpot row={top[2]} place={3} me={top[2].user_id === me} />}
+        {top[1] && <PodiumSpot row={top[1]} place={2} me={top[1].user_id === me} onOpen={() => onOpen(top[1])} />}
+        {top[0] && <PodiumSpot row={top[0]} place={1} me={top[0].user_id === me} onOpen={() => onOpen(top[0])} />}
+        {top[2] && <PodiumSpot row={top[2]} place={3} me={top[2].user_id === me} onOpen={() => onOpen(top[2])} />}
       </div>
       {rest.length > 0 && (
         <div className="space-y-2">
           {rest.map((r, i) => (
-            <RankRow key={r.user_id} row={r} rank={i + 4} me={r.user_id === me} />
+            <RankRow key={r.user_id} row={r} rank={i + 4} me={r.user_id === me} onOpen={() => onOpen(r)} />
           ))}
         </div>
       )}
@@ -150,6 +156,7 @@ export function ClassementView({
   const router = useRouter();
   const koExists = bracket.length > 0;
   const [tab, setTab] = useState<"players" | "groups">("players");
+  const [detail, setDetail] = useState<LbRow | null>(null);
   const groupLabels = Object.keys(standings).sort();
 
   // Temps réel : rafraîchit le classement dès qu'un score de match change.
@@ -197,7 +204,7 @@ export function ClassementView({
       </div>
 
       {tab === "players" ? (
-        <Players rows={players} me={me} />
+        <Players rows={players} me={me} onOpen={setDetail} />
       ) : koExists ? (
         <BracketView matches={bracket} />
       ) : groupLabels.length === 0 ? (
@@ -211,6 +218,15 @@ export function ClassementView({
             Les 2 premiers de chaque groupe sont qualifiés (en bleu).
           </p>
         </div>
+      )}
+
+      {detail && (
+        <PlayerDetail
+          userId={detail.user_id}
+          name={detail.display_name}
+          avatarUrl={detail.avatar_url}
+          onClose={() => setDetail(null)}
+        />
       )}
     </div>
   );

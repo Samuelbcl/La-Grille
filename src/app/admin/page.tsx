@@ -10,6 +10,7 @@ import { Avatar } from "@/components/Avatar";
 import { SEED_MATCHES } from "@/data/matches";
 import { BonusAdmin } from "@/components/BonusAdmin";
 import { ScoreOverride } from "@/components/ScoreOverride";
+import { PlayerDetail } from "@/components/PlayerDetail";
 import { Copy, Check } from "lucide-react";
 
 type Pool = {
@@ -30,6 +31,7 @@ export default function AdminPage() {
   const [matchCount, setMatchCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [detailMember, setDetailMember] = useState<Member | null>(null);
 
   // formulaires
   const [poolName, setPoolName] = useState("");
@@ -198,7 +200,11 @@ export default function AdminPage() {
         </h2>
         <div className="space-y-3">
           {members.map((mem) => (
-            <div key={mem.userId} className="flex items-center gap-3.5">
+            <button
+              key={mem.userId}
+              onClick={() => setDetailMember(mem)}
+              className="flex w-full items-center gap-3.5 text-left active:scale-[0.99] transition"
+            >
               <Avatar url={mem.avatarUrl} name={mem.name} size={52} />
               <span className="min-w-0 flex-1 truncate font-medium">{mem.name}</span>
               {mem.isAdmin && (
@@ -206,7 +212,7 @@ export default function AdminPage() {
                   Organisateur
                 </span>
               )}
-            </div>
+            </button>
           ))}
         </div>
       </Card>
@@ -285,6 +291,15 @@ export default function AdminPage() {
             déconnecter, va dans l&apos;onglet <b>Profil</b>.
           </p>
         </Card>
+      )}
+
+      {detailMember && (
+        <PlayerDetail
+          userId={detailMember.userId}
+          name={detailMember.name}
+          avatarUrl={detailMember.avatarUrl}
+          onClose={() => setDetailMember(null)}
+        />
       )}
     </div>
   );
