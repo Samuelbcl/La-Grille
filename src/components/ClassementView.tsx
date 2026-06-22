@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trophy, Crown, Target, Flame, Snowflake, ChevronUp, ChevronDown, type LucideIcon } from "lucide-react";
+import { Trophy, ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Flag } from "@/components/Flag";
@@ -23,44 +23,6 @@ export type LbRow = {
 };
 
 const MEDALS = ["🥇", "🥈", "🥉"];
-
-const BADGE_META: Record<string, { Icon: LucideIcon; cls: string; label: string }> = {
-  leader: { Icon: Crown, cls: "text-warning", label: "Leader" },
-  exact: { Icon: Target, cls: "text-accent", label: "Roi du score exact" },
-  day: { Icon: Flame, cls: "text-[#ff8a3d]", label: "Meilleur du jour" },
-  last: { Icon: Snowflake, cls: "text-muted", label: "Lanterne rouge" },
-};
-
-function BadgesCard({ badges, players }: { badges: Record<string, string[]>; players: LbRow[] }) {
-  const order = ["leader", "exact", "day", "last"];
-  const rows = order
-    .map((key) => {
-      const holderId = Object.keys(badges).find((uid) => badges[uid]?.includes(key));
-      const holder = players.find((p) => p.user_id === holderId);
-      return holder ? { key, ...BADGE_META[key], holder } : null;
-    })
-    .filter((x): x is { key: string; Icon: LucideIcon; cls: string; label: string; holder: LbRow } => x != null);
-  if (!rows.length) return null;
-  return (
-    <div className="mb-4 rounded-2xl border border-border bg-surface p-4 shadow-card">
-      <p className="mb-2.5 text-[12px] font-bold uppercase tracking-wide text-muted">Badges du moment</p>
-      <div className="space-y-2.5">
-        {rows.map(({ key, Icon, cls, label, holder }) => (
-          <div key={key} className="flex items-center gap-2.5 text-[13px]">
-            <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full bg-surface-2 ${cls}`}>
-              <Icon size={15} />
-            </span>
-            <span className="min-w-0 flex-1 font-semibold">{label}</span>
-            <span className="flex items-center gap-1.5">
-              <Avatar url={holder.avatar_url} name={holder.display_name} size={20} />
-              <span className="max-w-[120px] truncate font-medium">{holder.display_name}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function Movement({ d }: { d: number }) {
   if (!d) return null;
@@ -216,11 +178,6 @@ function GroupTable({ label, rows }: { label: string; rows: TeamStanding[] }) {
   );
 }
 
-type RecapData = {
-  count: number;
-  top: { user_id: string; display_name: string; avatar_url: string | null; pts: number }[];
-};
-
 export function ClassementView({
   players,
   standings,
@@ -228,8 +185,6 @@ export function ClassementView({
   poolId,
   bracket,
   deltas,
-  badges,
-  recap,
 }: {
   players: LbRow[];
   standings: Record<string, TeamStanding[]>;
@@ -237,14 +192,11 @@ export function ClassementView({
   poolId: string;
   bracket: BracketMatch[];
   deltas: Record<string, number>;
-  badges: Record<string, string[]>;
-  recap: RecapData;
 }) {
   const router = useRouter();
   const koExists = bracket.length > 0;
   const [tab, setTab] = useState<"players" | "groups">("players");
   const [detail, setDetail] = useState<LbRow | null>(null);
-  const [recapAll, setRecapAll] = useState(false);
   const groupLabels = Object.keys(standings).sort();
 
   // Temps réel : rafraîchit le classement dès qu'un score de match change.
@@ -292,35 +244,7 @@ export function ClassementView({
       </div>
 
       {tab === "players" ? (
-        <>
-          {recap.count > 0 && recap.top.length > 0 && (
-            <div className="mb-4 rounded-2xl border border-border bg-surface p-4 shadow-card">
-              <div className="mb-2.5 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wide text-warning">
-                <Flame size={14} /> Récap du jour · {recap.count} match{recap.count > 1 ? "s" : ""}
-              </div>
-              <div className="space-y-1.5">
-                {(recapAll ? recap.top : recap.top.slice(0, 3)).map((t, i) => (
-                  <div key={t.user_id} className="flex items-center gap-2 text-[13px]">
-                    <span className="w-4 text-center text-muted">{i + 1}</span>
-                    <Avatar url={t.avatar_url} name={t.display_name} size={22} />
-                    <span className="min-w-0 flex-1 truncate font-medium">{t.display_name}</span>
-                    <span className="font-bold tabular-nums text-success">+{t.pts}</span>
-                  </div>
-                ))}
-              </div>
-              {recap.top.length > 3 && (
-                <button
-                  onClick={() => setRecapAll((v) => !v)}
-                  className="mt-2 w-full text-center text-[12px] font-medium text-accent"
-                >
-                  {recapAll ? "Voir moins" : `Voir tout (${recap.top.length})`}
-                </button>
-              )}
-            </div>
-          )}
-          <BadgesCard badges={badges} players={players} />
-          <Players rows={players} me={me} onOpen={setDetail} deltas={deltas} />
-        </>
+        <Players rows={players} me={me} onOpen={setDetail} deltas={deltas} />
       ) : koExists ? (
         <BracketView matches={bracket} />
       ) : groupLabels.length === 0 ? (

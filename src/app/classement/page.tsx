@@ -42,29 +42,6 @@ export default async function ClassementPage() {
     deltas[p.user_id] = recap.count > 0 ? (prevRank.get(p.user_id) ?? i) - i : 0;
   });
 
-  // Badges (cosmétiques) : leader · roi du score exact · meilleur du jour · lanterne rouge.
-  const badges: Record<string, string[]> = {};
-  const addBadge = (id: string, b: string) => {
-    (badges[id] ??= []).push(b);
-  };
-  if (players[0]) addBadge(players[0].user_id, "leader");
-  const exactKing = [...players].filter((p) => p.exact_count > 0).sort((a, b) => b.exact_count - a.exact_count)[0];
-  if (exactKing) addBadge(exactKing.user_id, "exact");
-  const dayBest = Object.entries(today)
-    .filter(([, v]) => v.pts > 0)
-    .sort((a, b) => b[1].pts - a[1].pts)[0];
-  if (dayBest) addBadge(dayBest[0], "day");
-  if (players.length > 2) addBadge(players[players.length - 1].user_id, "last");
-
-  // Récap du jour : top 3 par points gagnés aujourd'hui.
-  const recapTop = Object.entries(today)
-    .map(([id, v]) => {
-      const p = players.find((x) => x.user_id === id);
-      return p ? { user_id: id, display_name: p.display_name, avatar_url: p.avatar_url, pts: v.pts } : null;
-    })
-    .filter((x): x is { user_id: string; display_name: string; avatar_url: string | null; pts: number } => !!x && x.pts > 0)
-    .sort((a, b) => b.pts - a.pts || a.display_name.localeCompare(b.display_name));
-
   const shareText =
     `🏆 ${pool.name} — La Grille\n` +
     players
@@ -92,8 +69,6 @@ export default async function ClassementPage() {
         poolId={pool.id as string}
         bracket={bracket}
         deltas={deltas}
-        badges={badges}
-        recap={{ count: recap.count, top: recapTop }}
       />
     </>
   );
