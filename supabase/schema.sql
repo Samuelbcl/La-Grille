@@ -235,6 +235,14 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
+-- Helper : l'utilisateur est-il le créateur (owner) du pool ?
+create or replace function public.is_pool_owner(p_pool uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.pools where id = p_pool and owner_id = auth.uid()
+  );
+$$;
+
 -- Rejoindre un groupe via son code d'invitation.
 -- SECURITY DEFINER : permet de retrouver le groupe par code même sans en être
 -- encore membre (la RLS de lecture sur "pools" l'empêcherait sinon).
@@ -262,7 +270,8 @@ grant execute on function public.join_pool(text) to anon, authenticated;
 drop policy if exists "profiles read" on public.profiles;
 create policy "profiles read" on public.profiles for select using (true);
 drop policy if exists "profiles update self" on public.profiles;
-create policy "profiles update self" on public.profiles for update using (id = auth.uid());
+create policy "profiles update self" on public.profiles for update
+  using (id = auth.uid()) with check (id = auth.uid());
 
 -- POOLS
 drop policy if exists "pools read member" on public.pools;
@@ -282,12 +291,20 @@ create policy "pools delete owner" on public.pools for delete
 drop policy if exists "members read same pool" on public.pool_members;
 create policy "members read same pool" on public.pool_members for select
   using (public.is_pool_member(pool_id));
+-- INSERT : on ne s'inscrit que soi-même, et on ne peut se mettre is_admin QUE
+-- si on est le créateur du pool (sinon : faille d'escalade de privilèges).
 drop policy if exists "members join self" on public.pool_members;
 create policy "members join self" on public.pool_members for insert
-  with check (user_id = auth.uid());
+  with check (
+    user_id = auth.uid()
+    and (is_admin = false or public.is_pool_owner(pool_id))
+  );
+-- UPDATE : RÉSERVÉ aux admins (un joueur ne peut plus modifier sa propre ligne
+-- pour se donner is_admin / has_paid). Anti-triche : pas de with check manquant.
 drop policy if exists "members admin update" on public.pool_members;
 create policy "members admin update" on public.pool_members for update
-  using (public.is_pool_admin(pool_id) or user_id = auth.uid());
+  using (public.is_pool_admin(pool_id))
+  with check (public.is_pool_admin(pool_id));
 
 -- MATCHES
 drop policy if exists "matches read member" on public.matches;
@@ -389,6 +406,67 @@ drop policy if exists "bonus results write" on public.bonus_results;
 create policy "bonus results write" on public.bonus_results for all
   using (public.is_pool_admin(pool_id))
   with check (public.is_pool_admin(pool_id));
+
+-- =====================================================================
+--  JOURNAL D'AUDIT (anti-triche) — trace toute modif sensible
+--  Qui (actor = auth.uid, null si synchro cron/service_role), quand, avant/après.
+-- =====================================================================
+create table if not exists public.audit_log (
+  id         bigint generated always as identity primary key,
+  at         timestamptz not null default now(),
+  actor      uuid,                       -- auteur de la modif (null = synchro automatique)
+  table_name text not null,
+  op         text not null,              -- INSERT | UPDATE | DELETE
+  row_id     uuid,
+  old_data   jsonb,
+  new_data   jsonb
+);
+alter table public.audit_log enable row level security;
+-- Lecture : admins de pool uniquement. Personne ne peut écrire/effacer via l'API
+-- (aucune policy insert/update/delete → seuls les triggers SECURITY DEFINER écrivent).
+drop policy if exists "audit read admin" on public.audit_log;
+create policy "audit read admin" on public.audit_log for select
+  using (exists (select 1 from public.pool_members pm where pm.user_id = auth.uid() and pm.is_admin));
+
+create or replace function public.audit_row()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare
+  j_new jsonb := case when tg_op <> 'DELETE' then to_jsonb(new) end;
+  j_old jsonb := case when tg_op <> 'INSERT' then to_jsonb(old) end;
+begin
+  insert into public.audit_log(actor, table_name, op, row_id, old_data, new_data)
+  values (
+    auth.uid(), tg_table_name, tg_op,
+    nullif(coalesce(j_new->>'id', j_old->>'id'), '')::uuid,
+    j_old, j_new
+  );
+  return coalesce(new, old);
+end;
+$$;
+
+-- Matchs : on ne loggue que les vrais changements de score/statut/manual
+-- (évite le bruit de la synchro qui réécrit la même valeur toutes les 1-2 min).
+drop trigger if exists trg_audit_matches on public.matches;
+create trigger trg_audit_matches after update on public.matches
+  for each row
+  when (old.score_a is distinct from new.score_a
+     or old.score_b is distinct from new.score_b
+     or old.status  is distinct from new.status
+     or old.manual  is distinct from new.manual)
+  execute function public.audit_row();
+drop trigger if exists trg_audit_matches_del on public.matches;
+create trigger trg_audit_matches_del after delete on public.matches
+  for each row execute function public.audit_row();
+
+-- Pronos : insert/update/delete (volume faible, très révélateur).
+drop trigger if exists trg_audit_predictions on public.predictions;
+create trigger trg_audit_predictions after insert or update or delete on public.predictions
+  for each row execute function public.audit_row();
+
+-- Droits des membres : toute attribution d'admin / changement de paiement.
+drop trigger if exists trg_audit_members on public.pool_members;
+create trigger trg_audit_members after insert or update or delete on public.pool_members
+  for each row execute function public.audit_row();
 
 -- =====================================================================
 --  REALTIME — diffuser les changements de matchs (classement en direct)
