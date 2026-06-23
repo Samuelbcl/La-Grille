@@ -15,8 +15,8 @@ export const BONUS: {
 
 export const BONUS_TOTAL = BONUS.reduce((s, b) => s + b.points, 0);
 
-/** Deadline des pronos bonus : mardi 23 juin 20h59 (Paris) = 18h59 UTC. */
-export const BONUS_DEADLINE = "2026-06-23T18:59:00Z";
+/** Deadline des pronos bonus : mercredi 24 juin 20h59 (Paris) = 18h59 UTC (juste avant les matchs de 21h). */
+export const BONUS_DEADLINE = "2026-06-24T18:59:00Z";
 
 /** Vrai si la deadline est passée (pronos bonus clôturés). */
 export function bonusLocked(): boolean {
