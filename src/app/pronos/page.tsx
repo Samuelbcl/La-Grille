@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentPool, getMatchesWithPredictions, getUserBonus } from "@/lib/queries";
 import { MatchCard } from "@/components/MatchCard";
 import { JOKERS_MAX } from "@/lib/scoring";
-import { BONUS_TOTAL } from "@/lib/bonus";
+import { BONUS, BONUS_TOTAL, bonusLocked } from "@/lib/bonus";
 import { dayKey } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,13 @@ export default async function PronosPage() {
   const pending = upcoming.filter((m) => m.pred_a == null).length;
   const jokersLeft = JOKERS_MAX - matches.filter((m) => m.joker).length;
   const bonus = await getUserBonus(pool.id, pool.user_id);
+  const bonusComplete = BONUS.every((b) => bonus.answers[b.key]);
+  const bonusClosed = bonusLocked();
+  const bonusLabel = bonusClosed
+    ? "🔒 Clôturés"
+    : bonusComplete
+      ? "Répondu ✅ · modifiable jusqu'au 24/06"
+      : `${BONUS_TOTAL} pts en jeu — à remplir avant le 24/06`;
 
   // Regroupe par jour (les matchs sont déjà triés par coup d'envoi).
   const days = new Map<string, typeof upcoming>();
@@ -63,9 +70,7 @@ export default async function PronosPage() {
         >
           <span className="min-w-0">
             <span className="block font-semibold">🎯 Pronos bonus</span>
-            <span className="block text-[12px] text-muted">
-              {bonus.validated ? "Validés ✅" : `${BONUS_TOTAL} pts en jeu pour la phase finale — à valider !`}
-            </span>
+            <span className="block text-[12px] text-muted">{bonusLabel}</span>
           </span>
           <span className="shrink-0 text-accent font-medium">→</span>
         </Link>

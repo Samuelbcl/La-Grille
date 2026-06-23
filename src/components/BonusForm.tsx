@@ -14,16 +14,16 @@ export function BonusForm({
   userId,
   teams,
   initial,
-  validated,
   locked,
+  deadlineLabel,
   results,
 }: {
   poolId: string;
   userId: string | null;
   teams: Team[];
   initial: Record<string, string>;
-  validated: boolean;
   locked: boolean;
+  deadlineLabel: string;
   results: Record<string, string>;
 }) {
   const router = useRouter();
@@ -31,14 +31,12 @@ export function BonusForm({
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const nameOf = (code: string) => teams.find((t) => t.code === code)?.name ?? code;
-  const readOnly = validated || locked;
 
-  async function validate() {
+  async function save() {
     if (BONUS.some((b) => !answers[b.key]?.trim())) {
-      setMsg("Réponds à toutes les questions avant de valider.");
+      setMsg("Réponds à toutes les questions.");
       return;
     }
-    if (!confirm("⚠️ Une fois validé, tu ne pourras PLUS changer tes réponses. Tu confirmes ?")) return;
     if (!userId) return router.push("/login");
     setSaving(true);
     setMsg(null);
@@ -50,18 +48,27 @@ export function BonusForm({
       answer: answers[b.key].trim(),
     }));
     const { error } = await supabase.from("bonus_answers").upsert(rows, { onConflict: "pool_id,user_id,question_key" });
+    setSaving(false);
     if (error) {
-      setSaving(false);
-      setMsg("Échec de l'enregistrement.");
+      setMsg("Échec de l'enregistrement (deadline peut-être passée).");
       return;
     }
-    await supabase.from("pool_members").update({ bonus_validated: true }).eq("pool_id", poolId).eq("user_id", userId);
-    setSaving(false);
+    setMsg("Enregistré ✅ — modifiable jusqu'à la deadline.");
     router.refresh();
   }
 
   return (
     <div className="space-y-4">
+      <div className="rounded-2xl border border-border bg-surface-2 p-3 text-center text-[13px]">
+        {locked ? (
+          <span className="text-muted">🔒 Pronos bonus clôturés (deadline passée).</span>
+        ) : (
+          <span>
+            ✍️ Modifiable jusqu&apos;au <b className="capitalize">{deadlineLabel}</b>
+          </span>
+        )}
+      </div>
+
       {BONUS.map((b) => {
         const ans = answers[b.key] ?? "";
         const correct = results[b.key];
@@ -76,7 +83,7 @@ export function BonusForm({
             </div>
             <p className="mb-2.5 text-[12px] text-muted">{b.hint}</p>
 
-            {readOnly ? (
+            {locked ? (
               <div className="flex items-center gap-2 text-[15px] font-semibold">
                 {b.kind === "team" && ans && <Flag code={ans} size={18} />}
                 <span>{b.kind === "team" ? nameOf(ans) : ans || "—"}</span>
@@ -111,7 +118,7 @@ export function BonusForm({
               </>
             )}
 
-            {readOnly && resolved && !isRight && (
+            {locked && resolved && !isRight && (
               <p className="mt-1 text-[11px] text-muted">
                 Bonne réponse : {b.kind === "team" ? nameOf(correct) : correct}
               </p>
@@ -120,22 +127,16 @@ export function BonusForm({
         );
       })}
 
-      {validated ? (
-        <p className="text-center text-[13px] font-semibold text-success">
-          ✅ Tes pronos bonus sont validés et verrouillés.
-        </p>
-      ) : locked ? (
-        <p className="text-center text-[13px] text-muted">
-          La phase finale a commencé — les pronos bonus sont clôturés.
-        </p>
+      {locked ? (
+        <p className="text-center text-[13px] text-muted">Les pronos bonus sont clôturés.</p>
       ) : (
         <>
-          {msg && <p className="px-1 text-center text-sm text-[#ff3b30]">{msg}</p>}
-          <Button size="lg" onClick={validate} disabled={saving}>
-            {saving ? "…" : "Valider mes pronos bonus"}
+          {msg && <p className="px-1 text-center text-sm text-accent">{msg}</p>}
+          <Button size="lg" onClick={save} disabled={saving}>
+            {saving ? "…" : "Enregistrer mes pronos bonus"}
           </Button>
           <p className="text-center text-[11px] text-muted">
-            Une fois validé, plus aucun changement possible — réfléchis bien ! 😏
+            Tu peux revenir les modifier autant que tu veux avant la deadline.
           </p>
         </>
       )}

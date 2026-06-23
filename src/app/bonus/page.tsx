@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
 import { getCurrentPool, getTeams, getUserBonus, getBonusResults } from "@/lib/queries";
 import { BonusForm } from "@/components/BonusForm";
-import { BONUS_TOTAL } from "@/lib/bonus";
+import { BONUS_TOTAL, bonusLocked, bonusDeadlineLabel } from "@/lib/bonus";
 
 export const dynamic = "force-dynamic";
 
@@ -13,21 +12,12 @@ export default async function BonusPage() {
     return <div className="px-6 pt-24 text-center text-muted">Rejoins un groupe d&apos;abord.</div>;
   }
 
-  const supabase = await createClient();
-  const [teams, userBonus, results, { data: ko }] = await Promise.all([
+  const [teams, userBonus, results] = await Promise.all([
     getTeams(pool.id),
     getUserBonus(pool.id, pool.user_id),
     getBonusResults(pool.id),
-    supabase
-      .from("matches")
-      .select("id")
-      .eq("pool_id", pool.id)
-      .neq("stage", "group")
-      .lte("kickoff", new Date().toISOString())
-      .limit(1),
   ]);
-  // Clôturé dès qu'un match de phase finale a commencé.
-  const locked = (ko ?? []).length > 0;
+  const locked = bonusLocked();
 
   return (
     <>
@@ -45,8 +35,8 @@ export default async function BonusPage() {
           userId={pool.user_id}
           teams={teams}
           initial={userBonus.answers}
-          validated={userBonus.validated}
           locked={locked}
+          deadlineLabel={bonusDeadlineLabel()}
           results={results}
         />
       </div>

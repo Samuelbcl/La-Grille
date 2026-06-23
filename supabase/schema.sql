@@ -364,16 +364,14 @@ alter table public.bonus_answers enable row level security;
 drop policy if exists "bonus answers read" on public.bonus_answers;
 create policy "bonus answers read" on public.bonus_answers for select
   using (public.is_pool_member(pool_id));
+-- Écriture autorisée seulement AVANT la deadline (mercredi 24 juin 23h59 Paris = 21h59 UTC).
 drop policy if exists "bonus answers write" on public.bonus_answers;
 create policy "bonus answers write" on public.bonus_answers for all
-  using (user_id = auth.uid())
+  using (user_id = auth.uid() and now() < '2026-06-24T21:59:00Z'::timestamptz)
   with check (
     user_id = auth.uid()
     and public.is_pool_member(pool_id)
-    and not exists (
-      select 1 from public.pool_members pm
-      where pm.pool_id = bonus_answers.pool_id and pm.user_id = auth.uid() and pm.bonus_validated
-    )
+    and now() < '2026-06-24T21:59:00Z'::timestamptz
   );
 
 -- Bonnes réponses, saisies par l'organisateur quand elles sont connues.

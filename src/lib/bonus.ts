@@ -15,6 +15,26 @@ export const BONUS: {
 
 export const BONUS_TOTAL = BONUS.reduce((s, b) => s + b.points, 0);
 
+/** Deadline des pronos bonus : mercredi 24 juin 23h59 (Paris) = 21h59 UTC. */
+export const BONUS_DEADLINE = "2026-06-24T21:59:00Z";
+
+/** Vrai si la deadline est passée (pronos bonus clôturés). */
+export function bonusLocked(): boolean {
+  return Date.now() >= new Date(BONUS_DEADLINE).getTime();
+}
+
+/** Libellé lisible de la deadline (heure de Paris). */
+export function bonusDeadlineLabel(): string {
+  return new Date(BONUS_DEADLINE).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 /** Normalisation pour comparer les réponses (insensible casse/accents/espaces). */
 export function normalizeAns(s: string): string {
   return s
