@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentPool, getMatchesWithPredictions, getUserBonus } from "@/lib/queries";
 import { MatchCard } from "@/components/MatchCard";
 import { JOKERS_MAX } from "@/lib/scoring";
-import { BONUS, BONUS_TOTAL, bonusLocked } from "@/lib/bonus";
+import { BONUS, BONUS_TOTAL, bonusLocked, bonusDeadlineShort } from "@/lib/bonus";
 import { dayKey } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -34,8 +34,8 @@ export default async function PronosPage() {
   const bonusLabel = bonusClosed
     ? "🔒 Clôturés"
     : bonusComplete
-      ? "Répondu ✅ · modifiable jusqu'au 24/06"
-      : `${BONUS_TOTAL} pts en jeu — à remplir avant le 24/06`;
+      ? `Répondu ✅ · modifiable jusqu'au ${bonusDeadlineShort()}`
+      : `${BONUS_TOTAL} pts en jeu — à remplir avant le ${bonusDeadlineShort()}`;
 
   // Regroupe par jour (les matchs sont déjà triés par coup d'envoi).
   const days = new Map<string, typeof upcoming>();
