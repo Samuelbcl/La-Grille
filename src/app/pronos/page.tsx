@@ -2,7 +2,8 @@ import Link from "next/link";
 import { getCurrentPool, getMatchesWithPredictions, getUserBonus } from "@/lib/queries";
 import { MatchCard } from "@/components/MatchCard";
 import { JOKERS_MAX } from "@/lib/scoring";
-import { BONUS, BONUS_TOTAL, bonusLocked, bonusDeadlineShort } from "@/lib/bonus";
+import { BONUS, BONUS_TOTAL, BONUS_DEADLINE, bonusLocked, bonusDeadlineShort } from "@/lib/bonus";
+import { Countdown } from "@/components/Countdown";
 import { dayKey } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +72,11 @@ export default async function PronosPage() {
           <span className="min-w-0">
             <span className="block font-semibold">🎯 Pronos bonus</span>
             <span className="block text-[12px] text-muted">{bonusLabel}</span>
+            {!bonusClosed && (
+              <span className="mt-0.5 block text-[12px] font-semibold text-warning">
+                ⏳ Plus que <Countdown to={BONUS_DEADLINE} />
+              </span>
+            )}
           </span>
           <span className="shrink-0 text-accent font-medium">→</span>
         </Link>

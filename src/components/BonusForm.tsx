@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
-import { BONUS, normalizeAns, looseMatch } from "@/lib/bonus";
+import { BONUS, BONUS_DEADLINE, normalizeAns, looseMatch } from "@/lib/bonus";
+import { Countdown } from "@/components/Countdown";
 
 type Team = { code: string; name: string };
 
@@ -59,13 +60,19 @@ export function BonusForm({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border bg-surface-2 p-3 text-center text-[13px]">
+      <div className="rounded-2xl border border-border bg-surface-2 p-3 text-center">
         {locked ? (
-          <span className="text-muted">🔒 Pronos bonus clôturés (deadline passée).</span>
+          <span className="text-[13px] text-muted">🔒 Pronos bonus clôturés (deadline passée).</span>
         ) : (
-          <span>
-            ✍️ Modifiable jusqu&apos;au <b className="capitalize">{deadlineLabel}</b>
-          </span>
+          <>
+            <p className="text-[11px] uppercase tracking-wide text-muted">⏳ Temps restant pour modifier</p>
+            <p className="text-[22px] font-bold tabular-nums text-warning">
+              <Countdown to={BONUS_DEADLINE} />
+            </p>
+            <p className="text-[12px] text-muted">
+              jusqu&apos;au <span className="capitalize">{deadlineLabel}</span>
+            </p>
+          </>
         )}
       </div>
 
