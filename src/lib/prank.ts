@@ -1,5 +1,5 @@
 /**
- * Blague d'intro : un GIF affiché UNE SEULE FOIS par personne à l'ouverture de l'app.
+ * Blague d'intro : un GIF affiché UNE SEULE FOIS par appareil à l'ouverture de l'app.
  *
  * Workflow :
  *  1) enabled = false  → personne ne le voit. Toi seul peux le prévisualiser
