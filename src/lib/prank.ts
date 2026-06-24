@@ -10,13 +10,13 @@
  */
 export const PRANK = {
   /** false = mode aperçu (personne ne le voit automatiquement). true = publié au groupe. */
-  enabled: false,
+  enabled: true,
   /** Clé localStorage « déjà vu ». La changer = rejouer la blague pour tout le monde. */
   seenKey: "lagrille:prank-ronaldo-2026",
   /** Fichier du GIF, à déposer dans public/. */
   gif: "/prank-ronaldo.gif",
   /** Petite vanne sous le GIF (laisse "" pour ne rien afficher). */
-  caption: "😌 Calmez-vous.",
+  caption: "le vrai goat 🐐",
   /** Fermeture auto après X ms (0 = uniquement au tap). */
   autoCloseMs: 4500,
   /** Param d'URL pour l'aperçu privé : ouvre l'app avec ?prank=1 */
