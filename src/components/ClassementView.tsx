@@ -9,7 +9,7 @@ import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 import { BracketView, type BracketMatch } from "@/components/BracketView";
 import { PlayerDetail } from "@/components/PlayerDetail";
-import type { TeamStanding } from "@/lib/standings";
+import type { TeamStanding, ThirdPlace } from "@/lib/standings";
 
 export type LbRow = {
   user_id: string;
@@ -143,6 +143,10 @@ function Players({
   );
 }
 
+// Vert « qualifié » (iOS) — littéral pour rester vert sur tous les fonds/thèmes.
+const QUALIFIED_BG = "bg-[#34c75914]";
+const QUALIFIED_FG = "text-[#34c759]";
+
 function GroupTable({ label, rows }: { label: string; rows: TeamStanding[] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
@@ -158,15 +162,64 @@ function GroupTable({ label, rows }: { label: string; rows: TeamStanding[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((t, i) => (
-            <tr key={t.team} className="border-t border-border">
-              <td className={`py-2 text-center tabular-nums ${i < 2 ? "font-bold text-accent" : "text-muted"}`}>{i + 1}</td>
+          {rows.map((t, i) => {
+            const qualified = i < 2;
+            return (
+              <tr key={t.team} className={cn("border-t border-border", qualified && QUALIFIED_BG)}>
+                <td className={cn("py-2 text-center font-bold tabular-nums", qualified ? QUALIFIED_FG : "font-normal text-muted")}>{i + 1}</td>
+                <td className="py-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Flag code={t.code} size={15} />
+                    <span className="truncate">{t.team}</span>
+                  </span>
+                </td>
+                <td className="py-2 text-center tabular-nums text-muted">{t.played}</td>
+                <td className="py-2 text-center tabular-nums">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
+                <td className="py-2 pr-3 text-center font-bold tabular-nums">{t.pts}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/** Classement des 3èmes : les 8 meilleurs (en vert) rejoignent les 16es (format 2026). */
+function ThirdsTable({ rows }: { rows: ThirdPlace[] }) {
+  const cutoff = rows.findIndex((t) => !t.qualified); // 1re place éliminatoire (pour la ligne de coupe)
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+      <div className="bg-surface-2 px-4 py-2 text-[13px] font-semibold">Meilleurs 3èmes · 8 qualifiés</div>
+      <table className="w-full text-[13px]">
+        <thead>
+          <tr className="text-[11px] text-muted">
+            <th className="w-7 py-1.5 pl-3 text-center font-medium">#</th>
+            <th className="py-1.5 text-left font-medium">Équipe</th>
+            <th className="w-8 py-1.5 text-center font-medium">Gr.</th>
+            <th className="w-7 py-1.5 text-center font-medium">J</th>
+            <th className="w-10 py-1.5 text-center font-medium">Diff</th>
+            <th className="w-9 py-1.5 pr-3 text-center font-medium">Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t) => (
+            <tr
+              key={t.team}
+              className={cn(
+                "border-t",
+                t.qualified ? `${QUALIFIED_BG} border-border` : "border-border",
+                t.rank === cutoff + 1 && cutoff > 0 && "border-t-2 border-t-[#34c759]"
+              )}
+            >
+              <td className={cn("py-2 text-center font-bold tabular-nums", t.qualified ? QUALIFIED_FG : "font-normal text-muted")}>{t.rank}</td>
               <td className="py-2">
                 <span className="flex min-w-0 items-center gap-2">
                   <Flag code={t.code} size={15} />
                   <span className="truncate">{t.team}</span>
                 </span>
               </td>
+              <td className="py-2 text-center font-medium tabular-nums text-muted">{t.group}</td>
               <td className="py-2 text-center tabular-nums text-muted">{t.played}</td>
               <td className="py-2 text-center tabular-nums">{t.gd > 0 ? `+${t.gd}` : t.gd}</td>
               <td className="py-2 pr-3 text-center font-bold tabular-nums">{t.pts}</td>
@@ -181,6 +234,7 @@ function GroupTable({ label, rows }: { label: string; rows: TeamStanding[] }) {
 export function ClassementView({
   players,
   standings,
+  bestThirds,
   me,
   poolId,
   bracket,
@@ -188,6 +242,7 @@ export function ClassementView({
 }: {
   players: LbRow[];
   standings: Record<string, TeamStanding[]>;
+  bestThirds: ThirdPlace[];
   me: string;
   poolId: string;
   bracket: BracketMatch[];
@@ -254,8 +309,10 @@ export function ClassementView({
           {groupLabels.map((g) => (
             <GroupTable key={g} label={g} rows={standings[g]} />
           ))}
+          {bestThirds.length > 0 && <ThirdsTable rows={bestThirds} />}
           <p className="pt-1 text-center text-[11px] text-muted">
-            Les 2 premiers de chaque groupe sont qualifiés (en bleu).
+            Qualifiés <span className="font-semibold text-[#34c759]">en vert</span> : les 2 premiers de
+            chaque groupe + les 8 meilleurs 3èmes (format 2026).
           </p>
         </div>
       )}

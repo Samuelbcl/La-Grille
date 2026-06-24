@@ -59,3 +59,21 @@ export function computeStandings(matches: MatchForStanding[]): Record<string, Te
   }
   return out;
 }
+
+/** Une 3e place de groupe, dans la course aux meilleurs 3èmes. */
+export type ThirdPlace = TeamStanding & { group: string; rank: number; qualified: boolean };
+
+/**
+ * Classement des 3èmes de chaque groupe (format CDM 2026 : les 8 meilleurs 3èmes
+ * rejoignent les 16es). Critères : points, diff. de buts, buts marqués.
+ */
+export function computeBestThirds(
+  standings: Record<string, TeamStanding[]>,
+  qualifyCount = 8
+): ThirdPlace[] {
+  const thirds = Object.entries(standings)
+    .map(([group, rows]) => (rows[2] ? { ...rows[2], group } : null))
+    .filter((t): t is TeamStanding & { group: string } => t !== null);
+  thirds.sort((x, y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf || x.team.localeCompare(y.team));
+  return thirds.map((t, i) => ({ ...t, rank: i + 1, qualified: i < qualifyCount }));
+}

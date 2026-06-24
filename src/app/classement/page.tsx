@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentPool, getLeaderboardWithBonus, getTodayRecap } from "@/lib/queries";
-import { computeStandings, type MatchForStanding } from "@/lib/standings";
+import { computeStandings, computeBestThirds, type MatchForStanding } from "@/lib/standings";
 import { ClassementView, type LbRow } from "@/components/ClassementView";
 import type { BracketMatch } from "@/components/BracketView";
 import { ShareButton } from "@/components/ShareButton";
@@ -27,6 +27,7 @@ export default async function ClassementPage() {
 
   const rows = matchRows ?? [];
   const standings = computeStandings(rows as MatchForStanding[]);
+  const bestThirds = computeBestThirds(standings);
   const bracket = (rows as BracketMatch[]).filter((m) => m.stage && m.stage !== "group");
 
   // Évolution du jour : rang d'avant aujourd'hui (points - points du jour) vs rang actuel.
@@ -65,6 +66,7 @@ export default async function ClassementPage() {
       <ClassementView
         players={players}
         standings={standings}
+        bestThirds={bestThirds}
         me={pool.user_id as string}
         poolId={pool.id as string}
         bracket={bracket}
