@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeShell } from "@/components/ThemeShell";
 import { Splash } from "@/components/Splash";
 import { Onboarding } from "@/components/Onboarding";
+import { PrankOverlay } from "@/components/PrankOverlay";
 
 export const metadata: Metadata = {
   title: "La Grille",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Splash />
         <Onboarding />
+        <PrankOverlay />
         <ThemeShell>{children}</ThemeShell>
       </body>
     </html>
