@@ -17,7 +17,7 @@ export default async function BonusPage() {
     getUserBonus(pool.id, pool.user_id),
     getBonusResults(pool.id),
   ]);
-  const locked = bonusLocked();
+  const locked = bonusLocked(pool.user_id);
 
   return (
     <>

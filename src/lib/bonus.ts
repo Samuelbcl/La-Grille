@@ -18,8 +18,16 @@ export const BONUS_TOTAL = BONUS.reduce((s, b) => s + b.points, 0);
 /** Deadline des pronos bonus : mercredi 24 juin 20h59 (Paris) = 18h59 UTC (juste avant les matchs de 21h). */
 export const BONUS_DEADLINE = "2026-06-24T18:59:00Z";
 
-/** Vrai si la deadline est passée (pronos bonus clôturés). */
-export function bonusLocked(): boolean {
+/**
+ * Accès EXCEPTIONNEL après la deadline (ex : un pote qui a oublié de remplir).
+ * Mettre son id utilisateur ici débloque le formulaire pour LUI SEUL.
+ * ⚠️ À vider (et restaurer la policy RLS standard) une fois qu'il a rempli.
+ */
+export const BONUS_OVERRIDE: string[] = ["5233c4e0-d15a-40b8-9109-d0b78d97838a"];
+
+/** Vrai si la deadline est passée (pronos bonus clôturés), sauf accès exceptionnel. */
+export function bonusLocked(userId?: string | null): boolean {
+  if (userId && BONUS_OVERRIDE.includes(userId)) return false;
   return Date.now() >= new Date(BONUS_DEADLINE).getTime();
 }
 

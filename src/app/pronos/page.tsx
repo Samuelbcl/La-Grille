@@ -31,7 +31,8 @@ export default async function PronosPage() {
   const jokersLeft = JOKERS_MAX - matches.filter((m) => m.joker).length;
   const bonus = await getUserBonus(pool.id, pool.user_id);
   const bonusComplete = BONUS.every((b) => bonus.answers[b.key]);
-  const bonusClosed = bonusLocked();
+  const bonusClosed = bonusLocked(pool.user_id);
+  const deadlinePassed = Date.now() >= new Date(BONUS_DEADLINE).getTime();
   const bonusLabel = bonusClosed
     ? "🔒 Clôturés"
     : bonusComplete
@@ -72,7 +73,7 @@ export default async function PronosPage() {
           <span className="min-w-0">
             <span className="block font-semibold">🎯 Pronos bonus</span>
             <span className="block text-[12px] text-muted">{bonusLabel}</span>
-            {!bonusClosed && (
+            {!bonusClosed && !deadlinePassed && (
               <span className="mt-0.5 block text-[12px] font-semibold text-warning">
                 ⏳ Plus que <Countdown to={BONUS_DEADLINE} />
               </span>
