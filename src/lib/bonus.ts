@@ -23,7 +23,7 @@ export const BONUS_DEADLINE = "2026-06-24T18:59:00Z";
  * Mettre son id utilisateur ici débloque le formulaire pour LUI SEUL.
  * ⚠️ À vider (et restaurer la policy RLS standard) une fois qu'il a rempli.
  */
-export const BONUS_OVERRIDE: string[] = ["5233c4e0-d15a-40b8-9109-d0b78d97838a"];
+export const BONUS_OVERRIDE: string[] = [];
 
 /** Vrai si la deadline est passée (pronos bonus clôturés), sauf accès exceptionnel. */
 export function bonusLocked(userId?: string | null): boolean {
