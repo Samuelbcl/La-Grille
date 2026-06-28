@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Users } from "lucide-react";
 import { formatKickoff } from "@/lib/utils";
-import { computePoints, outcomeOf, POINTS } from "@/lib/scoring";
+import { computePoints, outcomeOf, qualifierBonus, POINTS } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 
-type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; joker: boolean; isMine: boolean };
+type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; joker: boolean; isMine: boolean; qualOk: boolean };
 
 export interface MatchCardData {
   id: string;
@@ -24,9 +24,11 @@ export interface MatchCardData {
   score_a: number | null;
   score_b: number | null;
   status: string;
+  qualified?: string | null;
   pred_a?: number | null;
   pred_b?: number | null;
   joker?: boolean;
+  pred_qualifier?: string | null;
 }
 
 export function MatchCard({
@@ -54,11 +56,17 @@ export function MatchCard({
   const finished = m.status === "finished";
   const state: "upcoming" | "live" | "finished" = finished ? "finished" : locked ? "live" : "upcoming";
 
+  // Match à élimination directe → on demande aussi "qui se qualifie ?".
+  const isKO = m.stage != null && m.stage !== "group";
+  const qualName = (q: string | null) => (q === "a" ? m.team_a : q === "b" ? m.team_b : null);
+
   // Prono enregistré (état local → retour instantané après "Valider").
   const [predA, setPredA] = useState<number | null>(m.pred_a ?? null);
   const [predB, setPredB] = useState<number | null>(m.pred_b ?? null);
   const hasPred = predA != null && predB != null;
   const [joker, setJoker] = useState(m.joker ?? false);
+  const [predQual, setPredQual] = useState<string | null>(m.pred_qualifier ?? null); // enregistré
+  const [qual, setQual] = useState<string | null>(m.pred_qualifier ?? null); // brouillon d'édition
 
   // Édition inline.
   const [editing, setEditing] = useState(false);
@@ -86,7 +94,7 @@ export function MatchCard({
     const supabase = createClient();
     const { data } = await supabase
       .from("predictions")
-      .select("user_id, pred_a, pred_b, joker, profiles(display_name, avatar_url)")
+      .select("user_id, pred_a, pred_b, joker, pred_qualifier, profiles(display_name, avatar_url)")
       .eq("match_id", m.id);
     const list: PeerPred[] = (data ?? []).map((p) => {
       const row = p as unknown as {
@@ -94,17 +102,20 @@ export function MatchCard({
         pred_a: number;
         pred_b: number;
         joker: boolean;
+        pred_qualifier: string | null;
         profiles: { display_name: string; avatar_url: string | null } | null;
       };
       const base = finished ? computePoints(row.pred_a, row.pred_b, m.score_a, m.score_b) : 0;
+      const qb = finished ? qualifierBonus(row.pred_qualifier, m.qualified ?? null) : 0;
       return {
         name: row.profiles?.display_name ?? "Joueur",
         avatarUrl: row.profiles?.avatar_url ?? null,
         a: row.pred_a,
         b: row.pred_b,
-        pts: base * (row.joker ? 2 : 1),
+        pts: (base + qb) * (row.joker ? 2 : 1),
         joker: row.joker,
         isMine: row.user_id === userId,
+        qualOk: qb > 0,
       };
     });
     list.sort((x, y) => y.pts - x.pts);
@@ -132,6 +143,7 @@ export function MatchCard({
   function openEdit() {
     setA(predA ?? 0);
     setB(predB ?? 0);
+    setQual(predQual);
     setError(null);
     setEditing(true);
   }
@@ -144,7 +156,7 @@ export function MatchCard({
     const { error: upsertError } = await supabase
       .from("predictions")
       .upsert(
-        { match_id: m.id, user_id: userId, pred_a: a, pred_b: b },
+        { match_id: m.id, user_id: userId, pred_a: a, pred_b: b, pred_qualifier: isKO ? qual : null },
         { onConflict: "match_id,user_id" }
       );
     setSaving(false);
@@ -154,6 +166,7 @@ export function MatchCard({
     }
     setPredA(a);
     setPredB(b);
+    setPredQual(isKO ? qual : null);
     setEditing(false);
     import("canvas-confetti")
       .then(({ default: confetti }) =>
@@ -190,6 +203,16 @@ export function MatchCard({
           ? { text: "Raté", cls: "text-muted" }
           : null;
 
+  // Bonus "qui se qualifie ?" (matchs à élimination directe).
+  const qualResolved = finished && isKO && m.qualified != null && predQual != null;
+  const qualBadge = qualResolved
+    ? predQual === m.qualified
+      ? { text: `🎯 ${qualName(predQual)} qualifié +${mult}`, cls: "text-success" }
+      : { text: `🎯 Qualifié manqué (${qualName(predQual)})`, cls: "text-muted" }
+    : isKO && predQual && !finished
+      ? { text: `🎯 Tu vois passer : ${qualName(predQual)}`, cls: "text-muted" }
+      : null;
+
   return (
     <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
       {/* En-tête : groupe · date  +  bouton d'action en haut à droite */}
@@ -218,8 +241,35 @@ export function MatchCard({
         <div className="space-y-3">
           <EditRow name={m.team_a} code={m.team_a_code} value={a} onChange={setA} />
           <EditRow name={m.team_b} code={m.team_b_code} value={b} onChange={setB} />
-          <Button size="md" className="w-full" onClick={save} disabled={saving}>
-            {saving ? "Enregistrement…" : "Valider mon prono"}
+
+          {isKO && (
+            <div>
+              <p className="mb-1.5 text-[12px] font-medium text-muted">
+                Qui se qualifie ? <span className="text-[#ff3b30]">*</span>
+                <span className="ml-1 text-[11px]">(+1, même si match nul à 90 min)</span>
+              </p>
+              <div className="flex gap-1 rounded-2xl bg-surface-2 p-1">
+                {([["a", m.team_a, m.team_a_code], ["b", m.team_b, m.team_b_code]] as const).map(
+                  ([key, nm, code]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setQual(key)}
+                      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2 text-[13px] font-semibold transition active:scale-95 ${
+                        qual === key ? "bg-accent text-accent-fg shadow-card" : "text-muted"
+                      }`}
+                    >
+                      <Flag code={code} size={16} />
+                      <span className="truncate">{nm}</span>
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          <Button size="md" className="w-full" onClick={save} disabled={saving || (isKO && qual == null)}>
+            {saving ? "Enregistrement…" : isKO && qual == null ? "Choisis qui se qualifie" : "Valider mon prono"}
           </Button>
           {error && <p className="text-center text-sm text-[#ff3b30]">{error}</p>}
         </div>
@@ -250,6 +300,7 @@ export function MatchCard({
             </div>
           )}
           {badge && <div className={`mt-1 text-[11px] font-semibold ${badge.cls}`}>{badge.text}</div>}
+          {qualBadge && <div className={`mt-1 text-[11px] font-semibold ${qualBadge.cls}`}>{qualBadge.text}</div>}
           {!hasPred && locked && (
             <div className="mt-3 text-[11px] text-muted">Tu n&apos;as pas pronostiqué ce match.</div>
           )}
@@ -281,6 +332,7 @@ export function MatchCard({
                           </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-2">
+                          {p.qualOk && <span title="A trouvé l'équipe qualifiée" className="text-success">🎯</span>}
                           {p.joker && <span title="Joker ×2" className="text-warning">🃏</span>}
                           <span className="tabular-nums font-semibold">
                             {p.a}–{p.b}

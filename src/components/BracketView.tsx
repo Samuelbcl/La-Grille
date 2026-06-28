@@ -16,6 +16,7 @@ export type BracketMatch = {
   status: string;
   kickoff: string;
   venue: string | null;
+  qualified?: string | null; // 'a' | 'b' : équipe qualifiée (prolong./tab compris)
 };
 
 const ROUNDS = [
@@ -59,8 +60,9 @@ function TeamRow({ code, name, score, win, dim }: { code: string | null; name: s
 
 function Card({ m }: { m: BracketMatch }) {
   const done = m.status === "finished" && m.score_a != null && m.score_b != null;
-  const aWin = done && (m.score_a as number) > (m.score_b as number);
-  const bWin = done && (m.score_b as number) > (m.score_a as number);
+  // Vainqueur = vrai qualifié (prolongation/tab compris) si connu, sinon déduit du score à 90 min.
+  const aWin = m.qualified === "a" || (m.qualified == null && done && (m.score_a as number) > (m.score_b as number));
+  const bWin = m.qualified === "b" || (m.qualified == null && done && (m.score_b as number) > (m.score_a as number));
   return (
     <div
       className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border bg-surface p-2.5 shadow-card ${
@@ -123,8 +125,12 @@ export function BracketView({ matches }: { matches: BracketMatch[] }) {
   const finalM = matches.find(
     (m) => m.stage === "final" && m.status === "finished" && m.score_a != null && m.score_b != null
   );
+  // Champion = équipe qualifiée de la finale (prolong./tab compris), sinon vainqueur au score.
+  const champSide = finalM
+    ? finalM.qualified ?? ((finalM.score_a as number) > (finalM.score_b as number) ? "a" : "b")
+    : null;
   const champ = finalM
-    ? (finalM.score_a as number) > (finalM.score_b as number)
+    ? champSide === "a"
       ? { n: finalM.team_a, c: finalM.team_a_code }
       : { n: finalM.team_b, c: finalM.team_b_code }
     : null;

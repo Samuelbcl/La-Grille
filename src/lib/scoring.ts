@@ -26,6 +26,20 @@ export function computePoints(
   return 0;
 }
 
+/**
+ * Bonus « équipe qualifiée » (matchs à élimination directe) : +1 si l'équipe
+ * pronostiquée comme qualifiée ('a'|'b') est bien celle qui passe (prolongation
+ * et tirs au but compris). Miroir du calcul SQL (vue v_prediction_scores).
+ * NB : le ×2 du joker est appliqué par l'appelant, comme pour les points de score.
+ */
+export function qualifierBonus(
+  predQualifier: string | null | undefined,
+  realQualified: string | null | undefined
+): number {
+  if (!predQualifier || !realQualified) return 0;
+  return predQualifier === realQualified ? 1 : 0;
+}
+
 export type PredictionOutcome = "exact" | "correct" | "wrong" | "pending";
 
 export function outcomeOf(

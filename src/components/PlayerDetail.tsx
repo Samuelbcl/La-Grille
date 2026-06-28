@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { Flag } from "@/components/Flag";
-import { computePoints, outcomeOf } from "@/lib/scoring";
+import { computePoints, outcomeOf, qualifierBonus } from "@/lib/scoring";
 
 type Res = {
   matchNo: number;
@@ -22,6 +22,7 @@ type Res = {
   joker: boolean;
   pts: number;
   outcome: string;
+  qualWon: boolean;
 };
 
 /** Détail d'un joueur : tous ses matchs joués, son prono, ses points (joker inclus). */
@@ -44,7 +45,7 @@ export function PlayerDetail({
       const { data } = await supabase
         .from("predictions")
         .select(
-          "pred_a, pred_b, joker, matches(match_no, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff)"
+          "pred_a, pred_b, joker, pred_qualifier, matches(match_no, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff, qualified)"
         )
         .eq("user_id", userId);
       const list: Res[] = (data ?? [])
@@ -53,6 +54,7 @@ export function PlayerDetail({
             pred_a: number;
             pred_b: number;
             joker: boolean;
+            pred_qualifier: string | null;
             matches: {
               match_no: number;
               team_a: string;
@@ -63,12 +65,14 @@ export function PlayerDetail({
               score_b: number | null;
               status: string;
               kickoff: string;
+              qualified: string | null;
             } | null;
           };
           const mm = row.matches;
           if (!mm) return null;
           const finished = mm.status === "finished";
           const base = finished ? computePoints(row.pred_a, row.pred_b, mm.score_a, mm.score_b) : 0;
+          const qb = finished ? qualifierBonus(row.pred_qualifier, mm.qualified) : 0;
           return {
             matchNo: mm.match_no,
             kickoff: mm.kickoff,
@@ -82,8 +86,9 @@ export function PlayerDetail({
             predA: row.pred_a,
             predB: row.pred_b,
             joker: row.joker,
-            pts: base * (row.joker ? 2 : 1),
+            pts: (base + qb) * (row.joker ? 2 : 1),
             outcome: finished ? outcomeOf(row.pred_a, row.pred_b, mm.score_a, mm.score_b) : "pending",
+            qualWon: qb > 0,
           } as Res;
         })
         .filter((r): r is Res => r != null && new Date(r.kickoff) <= new Date())
@@ -145,6 +150,7 @@ export function PlayerDetail({
                     <span className={`font-semibold ${r.pts > 0 ? "text-success" : "text-muted"}`}>
                       +{r.pts}
                       {r.outcome === "exact" ? " · exact" : r.outcome === "correct" ? " · bon" : ""}
+                      {r.qualWon ? " · 🎯 qualifié" : ""}
                     </span>
                   ) : (
                     <span className="font-semibold text-[#ff3b30]">en cours</span>

@@ -68,6 +68,12 @@ create table if not exists public.matches (
 );
 -- Ajout idempotent (bases déjà créées).
 alter table public.matches add column if not exists manual boolean not null default false;
+-- Équipe réellement qualifiée (matchs à élimination directe) : 'a' = team_a, 'b' = team_b.
+-- Remplie par la synchro depuis le vainqueur API (prolongation / tirs au but compris).
+alter table public.matches add column if not exists qualified text;
+do $$ begin
+  alter table public.matches add constraint matches_qualified_chk check (qualified in ('a','b'));
+exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------
 -- 5. PRONOSTICS
@@ -85,6 +91,11 @@ create table if not exists public.predictions (
 );
 -- Ajout idempotent (bases déjà créées).
 alter table public.predictions add column if not exists joker boolean not null default false;
+-- Prono "qui se qualifie" (matchs à élimination directe) : 'a' = team_a, 'b' = team_b.
+alter table public.predictions add column if not exists pred_qualifier text;
+do $$ begin
+  alter table public.predictions add constraint predictions_pred_qualifier_chk check (pred_qualifier in ('a','b'));
+exception when duplicate_object then null; end $$;
 
 -- =====================================================================
 --  CALCUL DES POINTS — barème « La Grille » (cf. docs/REGLEMENT.md)
@@ -134,6 +145,13 @@ select
        then public.compute_points(p.pred_a, p.pred_b, m.score_a, m.score_b, m.stage)
             * (case when p.joker then 2 else 1 end)
        else 0 end as points,
+  -- Bonus +1 « équipe qualifiée » (phase finale), doublé par le joker. Tenu SÉPARÉ
+  -- des points de score pour ne pas fausser correct_count / exact_count.
+  case when m.status = 'finished' and m.qualified is not null and p.pred_qualifier = m.qualified
+       then (case when p.joker then 2 else 1 end)
+       else 0 end as qualif_points,
+  -- Flags bruts (NON multipliés par le joker) pour compter exacts/bons sans biais.
+  (m.status = 'finished' and public.compute_points(p.pred_a, p.pred_b, m.score_a, m.score_b, m.stage) = 2) as is_correct,
   (m.status = 'finished' and p.pred_a = m.score_a and p.pred_b = m.score_b) as is_exact
 from public.predictions p
 join public.matches m on m.id = p.match_id;
@@ -146,9 +164,11 @@ select
   s.user_id,
   pr.display_name,
   pr.avatar_url,
-  coalesce(sum(s.points), 0)                            as total_points,
+  coalesce(sum(s.points), 0) + coalesce(sum(s.qualif_points), 0) as total_points,
+  coalesce(sum(s.qualif_points), 0)                     as qualif_points,
   count(*) filter (where s.is_exact)                    as exact_count,
-  count(*) filter (where s.points = 2)                  as correct_count,
+  count(*) filter (where s.is_correct)                  as correct_count,
+  count(*) filter (where s.qualif_points > 0)           as qualif_count,
   count(*) filter (where s.status = 'finished')         as played_count
 from public.v_prediction_scores s
 join public.profiles pr on pr.id = s.user_id

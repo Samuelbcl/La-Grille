@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { BONUS, normalizeAns, looseMatch } from "@/lib/bonus";
-import { computePoints } from "@/lib/scoring";
+import { computePoints, qualifierBonus } from "@/lib/scoring";
 import { dayId, todayId } from "@/lib/utils";
 
 /** Récupère le 1er pool dont l'utilisateur est membre (MVP = un seul pool). */
@@ -37,7 +37,7 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
   // Les deux requêtes en parallèle (au lieu de l'une après l'autre) → 1 aller-retour gagné.
   const [{ data: matches }, { data: preds }] = await Promise.all([
     supabase.from("matches").select("*").eq("pool_id", poolId).order("kickoff", { ascending: true }),
-    supabase.from("predictions").select("match_id, pred_a, pred_b, joker").eq("user_id", userId),
+    supabase.from("predictions").select("match_id, pred_a, pred_b, joker, pred_qualifier").eq("user_id", userId),
   ]);
 
   const byMatch = new Map((preds ?? []).map((p) => [p.match_id, p]));
@@ -47,6 +47,7 @@ export async function getMatchesWithPredictions(poolId: string, userId: string) 
     pred_a: byMatch.get(m.id)?.pred_a ?? null,
     pred_b: byMatch.get(m.id)?.pred_b ?? null,
     joker: byMatch.get(m.id)?.joker ?? false,
+    pred_qualifier: byMatch.get(m.id)?.pred_qualifier ?? null,
   }));
 }
 
@@ -135,7 +136,7 @@ export async function getTodayRecap(poolId: string) {
   const today = todayId();
   const { data: matchRows } = await supabase
     .from("matches")
-    .select("id, score_a, score_b, kickoff")
+    .select("id, score_a, score_b, kickoff, qualified")
     .eq("pool_id", poolId)
     .eq("status", "finished");
   const todayMatches = (matchRows ?? []).filter((m) => dayId(m.kickoff) === today);
@@ -146,12 +147,14 @@ export async function getTodayRecap(poolId: string) {
   const byMatch = new Map(todayMatches.map((m) => [m.id, m]));
   const { data: preds } = await supabase
     .from("predictions")
-    .select("user_id, match_id, pred_a, pred_b, joker")
+    .select("user_id, match_id, pred_a, pred_b, joker, pred_qualifier")
     .in("match_id", ids);
   for (const p of preds ?? []) {
     const m = byMatch.get(p.match_id);
     if (!m) continue;
-    const pts = computePoints(p.pred_a, p.pred_b, m.score_a, m.score_b) * (p.joker ? 2 : 1);
+    const pts =
+      (computePoints(p.pred_a, p.pred_b, m.score_a, m.score_b) + qualifierBonus(p.pred_qualifier, m.qualified)) *
+      (p.joker ? 2 : 1);
     const e = (pointsToday[p.user_id] ??= { pts: 0, exact: 0 });
     e.pts += pts;
     if (m.score_a != null && p.pred_a === m.score_a && p.pred_b === m.score_b) e.exact++;

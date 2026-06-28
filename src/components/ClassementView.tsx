@@ -20,6 +20,7 @@ export type LbRow = {
   correct_count: number;
   played_count: number;
   bonus_points?: number;
+  qualif_points?: number;
 };
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -57,6 +58,7 @@ function PodiumSpot({ row, place, me, onOpen, delta }: { row: LbRow; place: 1 | 
         <p className="mt-0.5 text-center text-[10px] leading-tight text-muted tabular-nums">
           {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
           {row.correct_count > 1 ? "s" : ""}
+          {row.qualif_points ? <span className="text-success"> · +{row.qualif_points} qualif</span> : null}
           {row.bonus_points ? <span className="text-warning"> · 🎯+{row.bonus_points}</span> : null}
         </p>
       </button>
@@ -83,6 +85,7 @@ function RankRow({ row, rank, me, onOpen, delta }: { row: LbRow; rank: number; m
         <p className="text-[12px] text-muted">
           {row.exact_count} exact{row.exact_count > 1 ? "s" : ""} · {row.correct_count} bon
           {row.correct_count > 1 ? "s" : ""}
+          {row.qualif_points ? <span className="text-success"> · +{row.qualif_points} qualif</span> : null}
           {row.bonus_points ? <span className="text-warning"> · 🎯+{row.bonus_points}</span> : null}
         </p>
       </div>

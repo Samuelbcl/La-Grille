@@ -27,7 +27,10 @@ export default async function PronosPage() {
   const matches = await getMatchesWithPredictions(pool.id, pool.user_id);
   const now = Date.now();
   const upcoming = matches.filter((m) => new Date(m.kickoff).getTime() > now);
-  const pending = upcoming.filter((m) => m.pred_a == null).length;
+  // À compléter : score manquant, OU match à élimination directe sans choix de qualifié.
+  const pending = upcoming.filter(
+    (m) => m.pred_a == null || (m.stage && m.stage !== "group" && m.pred_qualifier == null)
+  ).length;
   const jokersLeft = JOKERS_MAX - matches.filter((m) => m.joker).length;
   const bonus = await getUserBonus(pool.id, pool.user_id);
   const bonusComplete = BONUS.every((b) => bonus.answers[b.key]);

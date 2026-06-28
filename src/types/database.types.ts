@@ -91,6 +91,7 @@ export interface Database {
           score_b: number | null;
           status: string;
           manual: boolean;
+          qualified: string | null;
           created_at: string;
         };
         Insert: {
@@ -105,6 +106,7 @@ export interface Database {
           team_a_code?: string | null;
           team_b_code?: string | null;
           manual?: boolean;
+          qualified?: string | null;
         };
         Update: {
           score_a?: number | null;
@@ -112,6 +114,7 @@ export interface Database {
           status?: string;
           kickoff?: string;
           manual?: boolean;
+          qualified?: string | null;
         };
         Relationships: [
           {
@@ -143,11 +146,12 @@ export interface Database {
           pred_a: number;
           pred_b: number;
           joker: boolean;
+          pred_qualifier: string | null;
           created_at: string;
           updated_at: string;
         };
-        Insert: { match_id: string; user_id: string; pred_a: number; pred_b: number; joker?: boolean };
-        Update: { pred_a?: number; pred_b?: number; joker?: boolean };
+        Insert: { match_id: string; user_id: string; pred_a: number; pred_b: number; joker?: boolean; pred_qualifier?: string | null };
+        Update: { pred_a?: number; pred_b?: number; joker?: boolean; pred_qualifier?: string | null };
         Relationships: [
           {
             foreignKeyName: "predictions_match_id_fkey";
@@ -174,8 +178,10 @@ export interface Database {
           display_name: string;
           avatar_url: string | null;
           total_points: number;
+          qualif_points: number;
           exact_count: number;
           correct_count: number;
+          qualif_count: number;
           played_count: number;
         };
         Relationships: [];
@@ -193,6 +199,8 @@ export interface Database {
           score_b: number | null;
           status: string;
           points: number;
+          qualif_points: number;
+          is_correct: boolean;
           is_exact: boolean;
         };
         Relationships: [];

@@ -83,7 +83,7 @@ export async function GET(request: Request) {
 
   // --- 2) Index poules (par paire) + matchs de phase finale (équipes connues) ---
   const apiByPair = new Map<string, { home: string; away: string; apiStatus: string; hs: number | null; as: number | null }>();
-  type Ko = { matchNo: number; stage: string; home: string; away: string; st: St; hs: number | null; as: number | null; kickoff: string; venue: string | null };
+  type Ko = { matchNo: number; stage: string; home: string; away: string; st: St; hs: number | null; as: number | null; kickoff: string; venue: string | null; qualified: string | null };
   const knockout: Ko[] = [];
 
   for (const m of data.matches ?? []) {
@@ -95,8 +95,24 @@ export async function GET(request: Request) {
       if (!home || !away) continue;
       apiByPair.set(pairKey(home, away), { home, away, apiStatus: m.status ?? "", hs, as });
     } else if (STAGE_MAP[m.stage] && home && away) {
-      // matchs à élimination directe avec les DEUX équipes déterminées
-      knockout.push({ matchNo: m.id, stage: STAGE_MAP[m.stage], home, away, st: apiState(m, hs, as), hs, as, kickoff: m.utcDate, venue: m.venue ?? null });
+      // matchs à élimination directe avec les DEUX équipes déterminées.
+      // Score à 90 min (temps réglementaire, arrêts de jeu inclus) pour le prono :
+      // on NE prend PAS fullTime sur un KO décidé en prolongation/tab (il mélange
+      // prolongation + tirs au but). Champ à utiliser = score.regularTime.
+      const dur: string | undefined = m.score?.duration;
+      const reg = m.score?.regularTime;
+      // Score à 90 min : fullTime si REGULAR (ou statut inconnu/en cours), sinon
+      // regularTime SANS retomber sur fullTime (qui inclurait la prolongation).
+      // Si regularTime absent en prolong./tab → null → traité comme un hoquet.
+      const regH = !dur || dur === "REGULAR" ? hs : reg?.home ?? null;
+      const regA = !dur || dur === "REGULAR" ? as : reg?.away ?? null;
+      const st = apiState(m, regH, regA);
+      // Équipe qualifiée (prolongation / tirs au but compris) : dès que l'API dit
+      // FINISHED avec un vainqueur — indépendant de la dispo du score à 90 min.
+      const w: string | undefined = m.score?.winner;
+      const qualified =
+        m.status === "FINISHED" && (w === "HOME_TEAM" || w === "AWAY_TEAM") ? (w === "HOME_TEAM" ? "a" : "b") : null;
+      knockout.push({ matchNo: m.id, stage: STAGE_MAP[m.stage], home, away, st, hs: regH, as: regA, kickoff: m.utcDate, venue: m.venue ?? null, qualified });
     }
   }
 
@@ -158,19 +174,48 @@ export async function GET(request: Request) {
   }
 
   // --- 5) Import auto de la phase finale (dès que les équipes sont connues) ---
-  // Matchs de phase finale corrigés à la main → on ne les écrase pas.
-  const { data: manualKo } = await admin
+  // On lit l'existant pour appliquer la MÊME protection anti-hoquet que les poules :
+  // jamais de retour en arrière (finished -> scheduled sur un appel API vide), et
+  // jamais d'écrasement d'un qualifié déjà connu par null.
+  const { data: koRows } = await admin
     .from("matches")
-    .select("pool_id, match_no")
-    .eq("manual", true)
+    .select("pool_id, match_no, status, score_a, score_b, qualified, manual")
     .neq("stage", "group");
-  const manualSet = new Set((manualKo ?? []).map((x) => `${x.pool_id}|${x.match_no}`));
+  const koExisting = new Map((koRows ?? []).map((x) => [`${x.pool_id}|${x.match_no}`, x]));
 
   let koWritten = 0;
   for (const ko of knockout) {
-    const finishedOrLive = ko.st === "finished" || ko.st === "live";
+    const hasScore = ko.hs != null && ko.as != null;
+    // État cible crédible depuis l'API (sinon hoquet → pas de cible → on garde l'existant).
+    let target: { status: string; scoreA: number | null; scoreB: number | null } | null = null;
+    if (ko.st === "finished" && hasScore) target = { status: "finished", scoreA: ko.hs, scoreB: ko.as };
+    else if (ko.st === "live" && hasScore) target = { status: "live", scoreA: ko.hs, scoreB: ko.as };
+    else if (ko.st === "scheduled") target = { status: "scheduled", scoreA: null, scoreB: null };
+
     for (const poolId of poolIds) {
-      if (manualSet.has(`${poolId}|${ko.matchNo}`)) continue; // corrigé manuellement
+      const ex = koExisting.get(`${poolId}|${ko.matchNo}`);
+
+      // Match forcé à la main : on ne touche pas au score, mais on renseigne le
+      // qualifié (objectif, indépendant du score forcé) s'il manque encore.
+      if (ex?.manual) {
+        if (ko.qualified && ex.qualified == null) {
+          await admin.from("matches").update({ qualified: ko.qualified }).eq("pool_id", poolId).eq("match_no", ko.matchNo);
+          koWritten++;
+        }
+        continue;
+      }
+
+      // Valeurs finales : on garde l'existant si la cible est un hoquet ou un retour en arrière.
+      const downgrade = target != null && ex != null && RANK[target.status] < (RANK[ex.status] ?? 0);
+      const useTarget = target != null && !downgrade;
+      const fStatus = useTarget ? target!.status : ex?.status ?? "scheduled";
+      const fA = useTarget ? target!.scoreA : ex?.score_a ?? null;
+      const fB = useTarget ? target!.scoreB : ex?.score_b ?? null;
+      const fQualified = ko.qualified ?? ex?.qualified ?? null; // jamais effacer un qualifié connu
+
+      if (ex && ex.status === fStatus && ex.score_a === fA && ex.score_b === fB && (ex.qualified ?? null) === fQualified)
+        continue;
+
       const { error: koErr } = await admin.from("matches").upsert(
         {
           pool_id: poolId,
@@ -183,9 +228,10 @@ export async function GET(request: Request) {
           team_a_code: nameToCode.get(ko.home) ?? null,
           team_b: ko.away,
           team_b_code: nameToCode.get(ko.away) ?? null,
-          score_a: finishedOrLive ? ko.hs : null,
-          score_b: finishedOrLive ? ko.as : null,
-          status: ko.st,
+          score_a: fA,
+          score_b: fB,
+          status: fStatus,
+          qualified: fQualified,
         },
         { onConflict: "pool_id,match_no" }
       );
