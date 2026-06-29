@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { Avatar } from "@/components/Avatar";
 
-type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; joker: boolean; isMine: boolean; qualOk: boolean };
+type PeerPred = { name: string; avatarUrl: string | null; a: number; b: number; pts: number; joker: boolean; isMine: boolean; qual: string | null; qualOk: boolean };
 
 export interface MatchCardData {
   id: string;
@@ -59,6 +59,7 @@ export function MatchCard({
   // Match à élimination directe → on demande aussi "qui se qualifie ?".
   const isKO = m.stage != null && m.stage !== "group";
   const qualName = (q: string | null) => (q === "a" ? m.team_a : q === "b" ? m.team_b : null);
+  const qualCode = (q: string | null) => (q === "a" ? m.team_a_code : q === "b" ? m.team_b_code : null);
 
   // Prono enregistré (état local → retour instantané après "Valider").
   const [predA, setPredA] = useState<number | null>(m.pred_a ?? null);
@@ -115,6 +116,7 @@ export function MatchCard({
         pts: (base + qb) * (row.joker ? 2 : 1),
         joker: row.joker,
         isMine: row.user_id === userId,
+        qual: row.pred_qualifier,
         qualOk: qb > 0,
       };
     });
@@ -326,13 +328,26 @@ export function MatchCard({
                       <div key={i} className="flex items-center justify-between gap-2 text-[13px]">
                         <span className="flex min-w-0 items-center gap-2">
                           <Avatar url={p.avatarUrl} name={p.name} size={20} />
-                          <span className={`truncate ${p.isMine ? "font-semibold text-accent" : ""}`}>
-                            {p.name}
-                            {p.isMine ? " · toi" : ""}
+                          <span className="min-w-0">
+                            <span className={`block truncate ${p.isMine ? "font-semibold text-accent" : ""}`}>
+                              {p.name}
+                              {p.isMine ? " · toi" : ""}
+                            </span>
+                            {isKO && p.qual && (
+                              <span
+                                className={`mt-0.5 flex items-center gap-1 text-[11px] ${
+                                  finished && p.qualOk ? "text-success" : "text-muted"
+                                }`}
+                              >
+                                <span className="shrink-0">passe :</span>
+                                <Flag code={qualCode(p.qual)} size={13} />
+                                <span className="truncate">{qualName(p.qual)}</span>
+                                {finished && <span className="shrink-0">{p.qualOk ? "✓" : "✗"}</span>}
+                              </span>
+                            )}
                           </span>
                         </span>
                         <span className="flex shrink-0 items-center gap-2">
-                          {p.qualOk && <span title="A trouvé l'équipe qualifiée" className="text-success">🎯</span>}
                           {p.joker && <span title="Joker ×2" className="text-warning">🃏</span>}
                           <span className="tabular-nums font-semibold">
                             {p.a}–{p.b}
