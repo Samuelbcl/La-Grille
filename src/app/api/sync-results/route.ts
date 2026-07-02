@@ -99,13 +99,21 @@ export async function GET(request: Request) {
       // Score à 90 min (temps réglementaire, arrêts de jeu inclus) pour le prono :
       // on NE prend PAS fullTime sur un KO décidé en prolongation/tab (il mélange
       // prolongation + tirs au but). Champ à utiliser = score.regularTime.
-      const dur: string | undefined = m.score?.duration;
-      const reg = m.score?.regularTime;
-      // Score à 90 min : fullTime si REGULAR (ou statut inconnu/en cours), sinon
-      // regularTime SANS retomber sur fullTime (qui inclurait la prolongation).
-      // Si regularTime absent en prolong./tab → null → traité comme un hoquet.
-      const regH = !dur || dur === "REGULAR" ? hs : reg?.home ?? null;
-      const regA = !dur || dur === "REGULAR" ? as : reg?.away ?? null;
+      // Score à 90 min (temps réglementaire, arrêts de jeu inclus, prolongation
+      // et tirs au but EXCLUS). On NE se fie PAS à `duration` : l'API le donne
+      // parfois faux (vu en vrai : BEL-SEN étiqueté "REGULAR" alors qu'il y a eu
+      // prolongation → extraTime renseigné). Règle robuste : regularTime s'il est
+      // fourni, sinon fullTime MOINS la prolongation MOINS les tirs au but.
+      const rt = m.score?.regularTime;
+      const et = m.score?.extraTime;
+      const pk = m.score?.penalties;
+      const reg90 = (side: "home" | "away", ft: number | null): number | null => {
+        if (rt && rt[side] != null) return rt[side];
+        if (ft == null) return null;
+        return ft - (et?.[side] ?? 0) - (pk?.[side] ?? 0);
+      };
+      const regH = reg90("home", hs);
+      const regA = reg90("away", as);
       const st = apiState(m, regH, regA);
       // Équipe qualifiée (prolongation / tirs au but compris) : dès que l'API dit
       // FINISHED avec un vainqueur — indépendant de la dispo du score à 90 min.
