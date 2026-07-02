@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar } from "@/components/Avatar";
 import { Flag } from "@/components/Flag";
-import { computePoints, outcomeOf, qualifierBonus } from "@/lib/scoring";
+import { computePoints, outcomeOf, qualifierBonus, displayResult } from "@/lib/scoring";
 
 type Res = {
   matchNo: number;
@@ -16,6 +16,10 @@ type Res = {
   codeB: string | null;
   realA: number | null;
   realB: number | null;
+  finalA: number | null;
+  finalB: number | null;
+  pensA: number | null;
+  pensB: number | null;
   status: string;
   predA: number;
   predB: number;
@@ -45,7 +49,7 @@ export function PlayerDetail({
       const { data } = await supabase
         .from("predictions")
         .select(
-          "pred_a, pred_b, joker, pred_qualifier, matches(match_no, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff, qualified)"
+          "pred_a, pred_b, joker, pred_qualifier, matches(match_no, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff, qualified, final_a, final_b, pens_a, pens_b)"
         )
         .eq("user_id", userId);
       const list: Res[] = (data ?? [])
@@ -66,6 +70,10 @@ export function PlayerDetail({
               status: string;
               kickoff: string;
               qualified: string | null;
+              final_a: number | null;
+              final_b: number | null;
+              pens_a: number | null;
+              pens_b: number | null;
             } | null;
           };
           const mm = row.matches;
@@ -82,6 +90,10 @@ export function PlayerDetail({
             codeB: mm.team_b_code,
             realA: mm.score_a,
             realB: mm.score_b,
+            finalA: mm.final_a,
+            finalB: mm.final_b,
+            pensA: mm.pens_a,
+            pensB: mm.pens_b,
             status: mm.status,
             predA: row.pred_a,
             predB: row.pred_b,
@@ -126,15 +138,21 @@ export function PlayerDetail({
           <p className="py-8 text-center text-muted">Aucun match joué pour l&apos;instant.</p>
         ) : (
           <div className="space-y-2">
-            {res.map((r) => (
+            {res.map((r) => {
+              const dr = displayResult({
+                score_a: r.realA, score_b: r.realB,
+                final_a: r.finalA, final_b: r.finalB, pens_a: r.pensA, pens_b: r.pensB,
+              });
+              return (
               <div key={r.matchNo} className="rounded-2xl border border-border bg-surface-2 p-3">
                 <div className="flex items-center justify-between gap-2 text-[13px]">
                   <span className="flex min-w-0 flex-1 items-center gap-1.5">
                     <Flag code={r.codeA} size={16} />
                     <span className="truncate">{r.teamA}</span>
                   </span>
-                  <span className="shrink-0 tabular-nums font-bold">
-                    {r.realA ?? "–"} – {r.realB ?? "–"}
+                  <span className="shrink-0 text-center tabular-nums font-bold">
+                    {dr.a ?? "–"} – {dr.b ?? "–"}
+                    {dr.note && <span className="block text-[10px] font-normal text-muted">{dr.note} · 90&apos; {dr.reg}</span>}
                   </span>
                   <span className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
                     <span className="truncate text-right">{r.teamB}</span>
@@ -157,7 +175,8 @@ export function PlayerDetail({
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

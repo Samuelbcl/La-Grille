@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Users } from "lucide-react";
 import { formatKickoff } from "@/lib/utils";
-import { computePoints, outcomeOf, qualifierBonus, POINTS } from "@/lib/scoring";
+import { computePoints, outcomeOf, qualifierBonus, displayResult, POINTS } from "@/lib/scoring";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
@@ -25,6 +25,10 @@ export interface MatchCardData {
   score_b: number | null;
   status: string;
   qualified?: string | null;
+  final_a?: number | null;
+  final_b?: number | null;
+  pens_a?: number | null;
+  pens_b?: number | null;
   pred_a?: number | null;
   pred_b?: number | null;
   joker?: boolean;
@@ -215,6 +219,9 @@ export function MatchCard({
       ? { text: `🎯 Tu vois passer : ${qualName(predQual)}`, cls: "text-muted" }
       : null;
 
+  // Résultat réel à afficher (prolongation/tab incluses). Les points restent sur 90 min.
+  const dr = displayResult(m);
+
   return (
     <div className="rounded-2xl bg-surface border border-border shadow-card p-4">
       {/* En-tête : groupe · date  +  bouton d'action en haut à droite */}
@@ -278,10 +285,17 @@ export function MatchCard({
       ) : (
         <>
           {/* Page Pronos (editable) : on montre TON prono à droite (comme un score).
-              Page Calendrier (lecture) : on montre le vrai score. */}
-          <Row name={m.team_a} code={m.team_a_code} score={editable ? predA : m.score_a} />
+              Page Calendrier (lecture) : on montre le vrai score final (prolong./tab incluses). */}
+          <Row name={m.team_a} code={m.team_a_code} score={editable ? predA : dr.a} />
           <div className="h-px bg-border my-2" />
-          <Row name={m.team_b} code={m.team_b_code} score={editable ? predB : m.score_b} />
+          <Row name={m.team_b} code={m.team_b_code} score={editable ? predB : dr.b} />
+
+          {!editable && dr.note && (
+            <div className="mt-1.5 text-[11px] text-muted">
+              {dr.note === "a.p." ? "Après prolongation" : dr.note}
+              {dr.reg && <span> · points sur les 90 min ({dr.reg})</span>}
+            </div>
+          )}
 
           {editable && hasPred && state === "upcoming" && (
             <button

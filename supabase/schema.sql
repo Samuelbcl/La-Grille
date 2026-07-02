@@ -74,6 +74,13 @@ alter table public.matches add column if not exists qualified text;
 do $$ begin
   alter table public.matches add constraint matches_qualified_chk check (qualified in ('a','b'));
 exception when duplicate_object then null; end $$;
+-- Affichage du VRAI score final (prolongation / tirs au but) — les points, eux,
+-- restent calculés sur score_a/score_b (90 min). final_* = score en fin de jeu
+-- (90 ou 120 min) ; pens_* = tirs au but. Null si match réglé en 90 min.
+alter table public.matches add column if not exists final_a integer;
+alter table public.matches add column if not exists final_b integer;
+alter table public.matches add column if not exists pens_a integer;
+alter table public.matches add column if not exists pens_b integer;
 
 -- ---------------------------------------------------------------------
 -- 5. PRONOSTICS

@@ -83,7 +83,7 @@ export async function GET(request: Request) {
 
   // --- 2) Index poules (par paire) + matchs de phase finale (équipes connues) ---
   const apiByPair = new Map<string, { home: string; away: string; apiStatus: string; hs: number | null; as: number | null }>();
-  type Ko = { matchNo: number; stage: string; home: string; away: string; st: St; hs: number | null; as: number | null; kickoff: string; venue: string | null; qualified: string | null };
+  type Ko = { matchNo: number; stage: string; home: string; away: string; st: St; hs: number | null; as: number | null; kickoff: string; venue: string | null; qualified: string | null; finalA: number | null; finalB: number | null; pensA: number | null; pensB: number | null };
   const knockout: Ko[] = [];
 
   for (const m of data.matches ?? []) {
@@ -120,7 +120,14 @@ export async function GET(request: Request) {
       const w: string | undefined = m.score?.winner;
       const qualified =
         m.status === "FINISHED" && (w === "HOME_TEAM" || w === "AWAY_TEAM") ? (w === "HOME_TEAM" ? "a" : "b") : null;
-      knockout.push({ matchNo: m.id, stage: STAGE_MAP[m.stage], home, away, st, hs: regH, as: regA, kickoff: m.utcDate, venue: m.venue ?? null, qualified });
+      // Score FINAL à afficher (fin du jeu = 90 min + prolongation) + tirs au but.
+      // Null si le match s'est réglé en 90 min (extraTime absent) → on affiche score.
+      const wentToET = st === "finished" && (et?.home != null || et?.away != null);
+      const finalA = wentToET && regH != null ? regH + (et?.home ?? 0) : null;
+      const finalB = wentToET && regA != null ? regA + (et?.away ?? 0) : null;
+      const pensA = st === "finished" ? pk?.home ?? null : null;
+      const pensB = st === "finished" ? pk?.away ?? null : null;
+      knockout.push({ matchNo: m.id, stage: STAGE_MAP[m.stage], home, away, st, hs: regH, as: regA, kickoff: m.utcDate, venue: m.venue ?? null, qualified, finalA, finalB, pensA, pensB });
     }
   }
 
@@ -187,7 +194,7 @@ export async function GET(request: Request) {
   // jamais d'écrasement d'un qualifié déjà connu par null.
   const { data: koRows } = await admin
     .from("matches")
-    .select("pool_id, match_no, status, score_a, score_b, qualified, manual")
+    .select("pool_id, match_no, status, score_a, score_b, qualified, final_a, final_b, pens_a, pens_b, manual")
     .neq("stage", "group");
   const koExisting = new Map((koRows ?? []).map((x) => [`${x.pool_id}|${x.match_no}`, x]));
 
@@ -220,8 +227,23 @@ export async function GET(request: Request) {
       const fA = useTarget ? target!.scoreA : ex?.score_a ?? null;
       const fB = useTarget ? target!.scoreB : ex?.score_b ?? null;
       const fQualified = ko.qualified ?? ex?.qualified ?? null; // jamais effacer un qualifié connu
+      // Score final affiché (prolongation) + tirs au but : idem, jamais écraser par null.
+      const fFinalA = ko.finalA ?? ex?.final_a ?? null;
+      const fFinalB = ko.finalB ?? ex?.final_b ?? null;
+      const fPensA = ko.pensA ?? ex?.pens_a ?? null;
+      const fPensB = ko.pensB ?? ex?.pens_b ?? null;
 
-      if (ex && ex.status === fStatus && ex.score_a === fA && ex.score_b === fB && (ex.qualified ?? null) === fQualified)
+      if (
+        ex &&
+        ex.status === fStatus &&
+        ex.score_a === fA &&
+        ex.score_b === fB &&
+        (ex.qualified ?? null) === fQualified &&
+        (ex.final_a ?? null) === fFinalA &&
+        (ex.final_b ?? null) === fFinalB &&
+        (ex.pens_a ?? null) === fPensA &&
+        (ex.pens_b ?? null) === fPensB
+      )
         continue;
 
       const { error: koErr } = await admin.from("matches").upsert(
@@ -240,6 +262,10 @@ export async function GET(request: Request) {
           score_b: fB,
           status: fStatus,
           qualified: fQualified,
+          final_a: fFinalA,
+          final_b: fFinalB,
+          pens_a: fPensA,
+          pens_b: fPensB,
         },
         { onConflict: "pool_id,match_no" }
       );

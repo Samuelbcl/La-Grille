@@ -40,6 +40,29 @@ export function qualifierBonus(
   return predQualifier === realQualified ? 1 : 0;
 }
 
+/**
+ * Score à AFFICHER pour un match (résultat réel : prolongation / tirs au but inclus)
+ * + la mention adéquate. ⚠️ Les POINTS, eux, restent calculés sur score_a/score_b
+ * (le score à 90 min). `reg` = rappel du score à 90 min quand il diffère du final.
+ */
+export function displayResult(m: {
+  score_a: number | null;
+  score_b: number | null;
+  final_a?: number | null;
+  final_b?: number | null;
+  pens_a?: number | null;
+  pens_b?: number | null;
+}): { a: number | null; b: number | null; note: string | null; reg: string | null } {
+  const hasFinal = m.final_a != null && m.final_b != null;
+  const a = hasFinal ? m.final_a! : m.score_a;
+  const b = hasFinal ? m.final_b! : m.score_b;
+  const hasPens = m.pens_a != null && m.pens_b != null;
+  const note = hasPens ? `t.a.b. ${m.pens_a}–${m.pens_b}` : hasFinal ? "a.p." : null;
+  // Rappel du score à 90 min (base des points) dès qu'il y a eu prolongation ou tab.
+  const reg = note ? `${m.score_a ?? "–"}–${m.score_b ?? "–"}` : null;
+  return { a, b, note, reg };
+}
+
 export type PredictionOutcome = "exact" | "correct" | "wrong" | "pending";
 
 export function outcomeOf(

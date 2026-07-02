@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TZ } from "@/lib/utils";
+import { displayResult } from "@/lib/scoring";
 
 export type BracketMatch = {
   stage: string; // r32 | r16 | qf | sf | final | third
@@ -17,6 +18,10 @@ export type BracketMatch = {
   kickoff: string;
   venue: string | null;
   qualified?: string | null; // 'a' | 'b' : équipe qualifiée (prolong./tab compris)
+  final_a?: number | null;
+  final_b?: number | null;
+  pens_a?: number | null;
+  pens_b?: number | null;
 };
 
 const ROUNDS = [
@@ -63,6 +68,8 @@ function Card({ m }: { m: BracketMatch }) {
   // Vainqueur = vrai qualifié (prolongation/tab compris) si connu, sinon déduit du score à 90 min.
   const aWin = m.qualified === "a" || (m.qualified == null && done && (m.score_a as number) > (m.score_b as number));
   const bWin = m.qualified === "b" || (m.qualified == null && done && (m.score_b as number) > (m.score_a as number));
+  // Score affiché = résultat réel (prolongation/tab incluses).
+  const dr = displayResult(m);
   return (
     <div
       className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-xl border bg-surface p-2.5 shadow-card ${
@@ -70,12 +77,13 @@ function Card({ m }: { m: BracketMatch }) {
       }`}
     >
       <div className="min-w-0 flex-1 space-y-1">
-        <TeamRow code={m.team_a_code} name={m.team_a} score={m.score_a} win={aWin} dim={bWin} />
-        <TeamRow code={m.team_b_code} name={m.team_b} score={m.score_b} win={bWin} dim={aWin} />
+        <TeamRow code={m.team_a_code} name={m.team_a} score={dr.a} win={aWin} dim={bWin} />
+        <TeamRow code={m.team_b_code} name={m.team_b} score={dr.b} win={bWin} dim={aWin} />
       </div>
       <div className="shrink-0 text-right text-[11px] leading-tight text-muted">
         <div className="font-semibold tabular-nums text-text">{fmtDate(m.kickoff)}</div>
         <div className="tabular-nums">{fmtTime(m.kickoff)}</div>
+        {dr.note && <div className="font-semibold text-warning">{dr.note}</div>}
         {m.venue && <div className="max-w-[88px] truncate">{m.venue}</div>}
       </div>
     </div>

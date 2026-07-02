@@ -20,7 +20,7 @@ export default async function ClassementPage() {
     getLeaderboardWithBonus(pool.id) as Promise<LbRow[]>,
     supabase
       .from("matches")
-      .select("stage, match_no, group_label, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff, venue, qualified")
+      .select("stage, match_no, group_label, team_a, team_a_code, team_b, team_b_code, score_a, score_b, status, kickoff, venue, qualified, final_a, final_b, pens_a, pens_b")
       .eq("pool_id", pool.id),
     getTodayRecap(pool.id),
   ]);

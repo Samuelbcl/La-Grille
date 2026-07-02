@@ -92,6 +92,10 @@ export interface Database {
           status: string;
           manual: boolean;
           qualified: string | null;
+          final_a: number | null;
+          final_b: number | null;
+          pens_a: number | null;
+          pens_b: number | null;
           created_at: string;
         };
         Insert: {
@@ -107,6 +111,10 @@ export interface Database {
           team_b_code?: string | null;
           manual?: boolean;
           qualified?: string | null;
+          final_a?: number | null;
+          final_b?: number | null;
+          pens_a?: number | null;
+          pens_b?: number | null;
         };
         Update: {
           score_a?: number | null;
@@ -115,6 +123,10 @@ export interface Database {
           kickoff?: string;
           manual?: boolean;
           qualified?: string | null;
+          final_a?: number | null;
+          final_b?: number | null;
+          pens_a?: number | null;
+          pens_b?: number | null;
         };
         Relationships: [
           {
